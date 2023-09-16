@@ -14,17 +14,18 @@ pub struct BackendState {
 
 impl BackendState {
     pub fn new(
-        demo_mode: bool,
+        _demo_mode: bool,
         process_tx: Sender<ProcessMessage>,
         storage_tx: Sender<StorageMessage>,
         config: Arc<ServiceConfig>,
     ) -> Self {
         Self {
             camera: CameraController::new(
-                match demo_mode {
-                    false => Box::new(ccdi_imager_moravian::MoravianImagerDriver::new()),
-                    true => Box::new(ccdi_imager_demo::DemoImagerDriver::new()),
-                },
+                // match demo_mode {
+                //     false => Box::new(ccdi_imager_moravian::MoravianImagerDriver::new()),
+                //     true => Box::new(ccdi_imager_demo::DemoImagerDriver::new()),
+                // },
+                Box::new(ccdi_imager_asicam::ASICameraDriver::new()),
                 process_tx,
                 storage_tx,
                 config

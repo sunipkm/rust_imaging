@@ -51,27 +51,28 @@ impl IoManager {
     }
 
     pub fn periodic_tasks(&mut self) -> Result<Vec<StateMessage>, String> {
-        let _ = log_err("Set PWM", self.heating_pwm.iterate());
-        let _ = log_err("Set Status", self.main_status.iterate());
+        // let _ = log_err("Set PWM", self.heating_pwm.iterate());
+        // let _ = log_err("Set Status", self.main_status.iterate());
 
-        let prev_input = self.last_trigger_value;
-        let actual_input = read_input(&self.trigger_input_path);
+        // let prev_input = self.last_trigger_value;
+        // let actual_input = read_input(&self.trigger_input_path);
 
-        if actual_input.is_some() {
-            self.last_trigger_value = actual_input;
-        }
+        // if actual_input.is_some() {
+        //     self.last_trigger_value = actual_input;
+        // }
 
-        let output = match (prev_input, self.last_trigger_value) {
-            (Some(prev), Some(actual)) if prev != actual => vec![
-                StateMessage::TriggerValueChanged(actual)
-            ],
-            (None, Some(actual)) => vec![
-                StateMessage::TriggerValueChanged(actual)
-            ],
-            _ => vec![],
-        };
+        // let output = match (prev_input, self.last_trigger_value) {
+        //     (Some(prev), Some(actual)) if prev != actual => vec![
+        //         StateMessage::TriggerValueChanged(actual)
+        //     ],
+        //     (None, Some(actual)) => vec![
+        //         StateMessage::TriggerValueChanged(actual)
+        //     ],
+        //     _ => vec![],
+        // };
 
-        Ok(output)
+        // Ok(output)
+        Ok(Vec::<StateMessage>::new())
     }
 }
 
