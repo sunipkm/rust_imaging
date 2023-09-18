@@ -38,7 +38,7 @@ impl ImagerDriver for ASICameraDriver {
         &mut self,
         descriptor: &DeviceDescriptor,
     ) -> Result<Box<dyn ImagerDevice>, String> {
-        let (mut cam, _) = open_camera(descriptor.id).map_err(|x| x.to_string())?;
+        let (cam, _) = open_camera(descriptor.id).map_err(|x| x.to_string())?;
         Ok(Box::new(ASICameraImager { device: cam }))
     }
 }

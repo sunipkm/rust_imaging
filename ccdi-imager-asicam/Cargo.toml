@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cameraunit = { path = "../../asicam_rs/cameraunit" }
-cameraunit_asi = { path = "../../asicam_rs/cameraunit_asi" }
+cameraunit = "1.0.1"
+cameraunit_asi = { git = "https://github.com/sunipkm/cameraunit_asi" }
 ccdi-imager-interface = { path = "../ccdi-imager-interface" }
 ccdi-common = { path = "../ccdi-common" }
