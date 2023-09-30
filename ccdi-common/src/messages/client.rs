@@ -70,12 +70,12 @@ impl CameraParams {
             time: 1.0,
             rendering: RenderingType::FullImage,
             render_size,
-            temperature: 25.0,
+            temperature: -10.0,
             trigger_required: false,
             heating_pwm: 0.0,
             autoexp: true,
-            percentile_pix: 0.99,
-            pixel_tgt: 0.67,
+            percentile_pix: 99.5,
+            pixel_tgt: 40000./65535.,
             pixel_tol: 5000./65535.,
         }
     }
