@@ -58,7 +58,7 @@ impl ImagerDevice for DemoImagerDevice {
         Ok(true)
     }
 
-    fn download_image(&mut self, params: &ExposureParams) -> Result<Vec<u16>, String> {
+    fn download_image(&mut self, params: &mut ExposureParams) -> Result<Vec<u16>, String> {
         Ok(generate_test_image(params.area.width, params.area.height))
     }
 

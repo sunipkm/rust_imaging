@@ -18,7 +18,7 @@ pub trait ImagerDevice {
     fn close(&mut self);
     fn start_exposure(&mut self, params: &ExposureParams) -> Result<(), String>;
     fn image_ready(&mut self, ) -> Result<bool, String>;
-    fn download_image(&mut self, params: &ExposureParams) -> Result<Vec<u16>, String>;
+    fn download_image(&mut self, params: &mut ExposureParams) -> Result<Vec<u16>, String>;
     fn set_temperature(&mut self, request: TemperatureRequest) -> Result<(), String>;
 }
 
@@ -54,6 +54,10 @@ pub struct ExposureParams {
     pub gain: u16,
     pub time: f64,
     pub area: ExposureArea,
+    pub autoexp: bool,
+    pub percentile_pix: f32,
+    pub pixel_tgt: f32,
+    pub pixel_tol: f32,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

@@ -56,6 +56,10 @@ pub struct CameraParams {
     pub temperature: f64,
     pub trigger_required: bool,
     pub heating_pwm: f64,
+    pub autoexp: bool,
+    pub percentile_pix: f32,
+    pub pixel_tgt: f32,
+    pub pixel_tol: f32,
 }
 
 impl CameraParams {
@@ -69,6 +73,10 @@ impl CameraParams {
             temperature: 25.0,
             trigger_required: false,
             heating_pwm: 0.0,
+            autoexp: true,
+            percentile_pix: 0.99,
+            pixel_tgt: 0.67,
+            pixel_tol: 5000./65535.,
         }
     }
 }

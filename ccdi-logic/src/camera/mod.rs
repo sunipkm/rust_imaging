@@ -111,7 +111,7 @@ impl CameraController {
                 required: into_state(self.camera_params.trigger_required),
                 save: into_state(self.storage_detail.storage_enabled),
                 loop_enabled: into_state(self.camera_params.loop_enabled),
-
+                
             },
             camera_properties: self.connected.as_ref().map(|cam| cam.get_properties()),
             camera_params: self.camera_params.clone(),
@@ -131,6 +131,10 @@ impl CameraController {
             SetTime(time) => self.camera_params.time = time,
             SetRenderingType(rendering) => self.camera_params.rendering = rendering,
             SetTriggerRequired(value) => self.camera_params.trigger_required = value,
+            SetAutoExp(value) => self.camera_params.autoexp = value,
+            SetPercentilePix(value) => self.camera_params.percentile_pix = value,
+            SetPixelTgt(value) => self.camera_params.pixel_tgt = value,
+            SetPixelTol(value) => self.camera_params.pixel_tol = value,
         }
 
         if let Some(camera) =  self.connected.as_mut() {

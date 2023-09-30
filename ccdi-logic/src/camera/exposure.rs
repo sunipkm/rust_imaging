@@ -46,8 +46,8 @@ impl ExposureController {
             let mut exposure = None;
             swap(&mut exposure, &mut self.current_exposure);
 
-            if let Some(params) = exposure {
-                let data = device.download_image(&params)?;
+            if let Some(mut params) = exposure {
+                let data = device.download_image(&mut params)?;
                 let raw_image = RawImage { params, data };
                 debug!("Image downloaded");
                 self.call_process_message(Arc::new(raw_image));
@@ -124,7 +124,11 @@ impl ExposureController {
                 y: 0,
                 width: self.properties.width,
                 height: self.properties.height
-            }
+            },
+            autoexp: self.camera_params.autoexp,
+            pixel_tgt: self.camera_params.pixel_tgt,
+            pixel_tol: self.camera_params.pixel_tol,
+            percentile_pix: self.camera_params.percentile_pix,
         }
     }
 }

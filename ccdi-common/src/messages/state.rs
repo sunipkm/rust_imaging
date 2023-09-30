@@ -33,6 +33,10 @@ pub enum CameraParamMessage {
     SetHeatingPwm(f64),
     SetRenderingType(RenderingType),
     SetTriggerRequired(bool),
+    SetAutoExp(bool),
+    SetPercentilePix(f32),
+    SetPixelTgt(f32),
+    SetPixelTol(f32),
 }
 
 #[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
