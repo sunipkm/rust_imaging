@@ -17,7 +17,6 @@ nanocv = { git = "https://github.com/viktorchvatal/nanocv.git" }
 ccdi-common = { path = "../ccdi-common" }
 ccdi-imager-interface = { path = "../ccdi-imager-interface" }
 ccdi-imager-demo = { path = "../ccdi-imager-demo" }
-ccdi-imager-moravian = { path = "../ccdi-imager-moravian" }
 ccdi-imager-asicam = { path = "../ccdi-imager-asicam" }
 
 
