@@ -63,7 +63,7 @@ impl Main {
             MenuItem::Composition => self.render_composition(ctx),
             MenuItem::Cooling => self.render_cooling(ctx),
             MenuItem::Shoot => self.render_shoot(ctx),
-            MenuItem::Info => html!{
+            MenuItem::Info => html! {
                 <CameraDetail data={self.view_state.camera_properties.clone()} />
             },
             MenuItem::System => self.render_system(ctx),
@@ -71,23 +71,42 @@ impl Main {
     }
 
     fn render_composition(&self, ctx: &Context<Self>) -> Html {
-        let action = ctx.link()
+        let action = ctx
+            .link()
             .callback(|action: StateMessage| Msg::SendMessage(action));
 
-        let gain_changed = ctx.link().callback(
-            |gain: f64| Msg::ParamUpdate(CameraParamMessage::SetGain(gain as u16))
-        );
+        let gain_changed = ctx
+            .link()
+            .callback(|gain: f64| Msg::ParamUpdate(CameraParamMessage::SetGain(gain as u16)));
 
-        let time_changed = ctx.link().callback(
-            |time: f64| Msg::ParamUpdate(CameraParamMessage::SetTime(time))
-        );
+        let time_changed = ctx
+            .link()
+            .callback(|time: f64| Msg::ParamUpdate(CameraParamMessage::SetTime(time)));
 
-        let rendering_changed = ctx.link().callback(
-            |value: RenderingType| Msg::ParamUpdate(CameraParamMessage::SetRenderingType(value))
-        );
+        let rendering_changed = ctx.link().callback(|value: RenderingType| {
+            Msg::ParamUpdate(CameraParamMessage::SetRenderingType(value))
+        });
 
-        html!{
+        html! {
             <div>
+                <p>{"Autoexposure"}</p>
+                <div>{
+                    if self.view_state.camera_params.autoexp
+                    {
+                        "Enabled"
+                    }
+                    else
+                    {
+                        "Disabled"
+                    }
+                }
+                </div>
+                <p>{"Current Exposure"}</p>
+                <div>{
+                    self.view_state.camera_params
+                    .time
+                }
+                </div>
                 <FloatSelector
                     name="Set camera gain"
                     config={self.view_state.config.gain.clone()}
@@ -113,15 +132,15 @@ impl Main {
     }
 
     fn render_cooling(&self, ctx: &Context<Self>) -> Html {
-        let cooling_changed = ctx.link().callback(
-            |temp: f64| Msg::ParamUpdate(CameraParamMessage::SetTemp(temp))
-        );
+        let cooling_changed = ctx
+            .link()
+            .callback(|temp: f64| Msg::ParamUpdate(CameraParamMessage::SetTemp(temp)));
 
-        let heating_changed = ctx.link().callback(
-            |temp: f64| Msg::ParamUpdate(CameraParamMessage::SetHeatingPwm(temp))
-        );
+        let heating_changed = ctx
+            .link()
+            .callback(|temp: f64| Msg::ParamUpdate(CameraParamMessage::SetHeatingPwm(temp)));
 
-        html!{
+        html! {
             <div>
                 <p>{"Chip temperature"}</p>
                 <div>{
@@ -148,10 +167,11 @@ impl Main {
     }
 
     fn render_shoot(&self, ctx: &Context<Self>) -> Html {
-        let action = ctx.link()
+        let action = ctx
+            .link()
             .callback(|action: StateMessage| Msg::SendMessage(action));
 
-        html!{
+        html! {
             <div>
                 <ShootingDetail
                     on_action={action.clone()}
@@ -167,26 +187,27 @@ impl Main {
     }
 
     fn render_system(&self, ctx: &Context<Self>) -> Html {
-        let action = ctx.link()
+        let action = ctx
+            .link()
             .callback(|action: StateMessage| Msg::SendMessage(action));
 
-        html!{
+        html! {
             <System on_action={action.clone()}/>
         }
     }
 
     fn render_main(&self) -> Html {
         match self.selected_menu {
-            MenuItem::Shoot => html!{
+            MenuItem::Shoot => html! {
                 <ShootingDetails storage_details={self.view_state.storage_detail.clone()} />
             },
-            _ => html!{
+            _ => html! {
                 <Picture
                     image={self.image.clone()}
                     hist_width={self.view_state.config.histogram_width}
                     hist_height={self.view_state.config.histogram_height}
                 />
-            }
+            },
         }
     }
 }
@@ -221,37 +242,36 @@ impl Component for Main {
             Msg::ConnectionState(state) => {
                 self.connection_state = state;
                 true
-            },
+            }
             Msg::ParamUpdate(message) => {
-                ctx.link().send_message(Msg::SendMessage(StateMessage::CameraParam(message)));
+                ctx.link()
+                    .send_message(Msg::SendMessage(StateMessage::CameraParam(message)));
                 false
             }
             Msg::Action(action) => {
                 match action {
                     UserAction::MenuClick(menuitem) => {
                         self.selected_menu = menuitem;
-                    },
+                    }
                 }
                 true
             }
-            Msg::MessageReceived(message) => {
-                self.receive_message(message)
-            }
+            Msg::MessageReceived(message) => self.receive_message(message),
         }
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let menu_clicked = ctx.link().callback(
-            |action: MenuItem| Msg::Action(UserAction::MenuClick(action))
-        );
+        let menu_clicked = ctx
+            .link()
+            .callback(|action: MenuItem| Msg::Action(UserAction::MenuClick(action)));
 
-        let client_message_received = ctx.link().callback(
-            |message: ClientMessage| Msg::MessageReceived(message)
-        );
+        let client_message_received = ctx
+            .link()
+            .callback(|message: ClientMessage| Msg::MessageReceived(message));
 
-        let connection_state_changed = ctx.link().callback(
-            |state: ConnectionState| Msg::ConnectionState(state)
-        );
+        let connection_state_changed = ctx
+            .link()
+            .callback(|state: ConnectionState| Msg::ConnectionState(state));
 
         html! {
             <>
