@@ -41,6 +41,8 @@ pub struct BasicProperties {
     pub width: usize,
     pub height: usize,
     pub temperature: f32,
+    pub exposure: f32,
+    pub roi: ExposureArea,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -61,7 +63,7 @@ pub struct ExposureParams {
     pub save: bool,
 }
 
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
 pub struct ExposureArea {
     pub x: usize,
     pub y: usize,

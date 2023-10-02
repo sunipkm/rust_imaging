@@ -2,7 +2,7 @@ use std::{fmt::Debug, time::Duration};
 
 use ccdi_imager_interface::{
     BasicProperties, DeviceDescriptor, DeviceProperty, ExposureParams, ImagerDevice, ImagerDriver,
-    ImagerProperties, TemperatureRequest,
+    ImagerProperties, TemperatureRequest, ExposureArea,
 };
 
 use cameraunit::{CameraInfo, CameraUnit, ROI};
@@ -134,10 +134,18 @@ impl ImagerDevice for ASICameraImager {
 }
 
 fn read_basic_props(device: &CameraUnitASI) -> BasicProperties {
+    let roi = device.get_roi();
     BasicProperties {
         width: device.get_ccd_width() as usize,
         height: device.get_ccd_height() as usize,
         temperature: device.get_temperature().unwrap_or(-273.0),
+        exposure: device.get_exposure().as_secs_f32(),
+        roi: ExposureArea {
+            x: roi.x_min as usize,
+            y: roi.y_min as usize,
+            width: (roi.x_max - roi.x_min) as usize,
+            height: (roi.y_max - roi.y_min) as usize,
+        }
     }
 }
 

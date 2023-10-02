@@ -2,9 +2,10 @@ mod components;
 mod connection;
 mod selectors;
 
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use ccdi_common::*;
+use ccdi_imager_interface::ExposureArea;
 use components::shooting_details::ShootingDetails;
 use connection::ConnectionService;
 use gloo::console;
@@ -23,6 +24,7 @@ use selectors::rendering::RenderingSelector;
 use crate::components::system::System;
 use crate::selectors::float::FloatSelector;
 use crate::selectors::bool::BoolSelector;
+use crate::selectors::usize::UsizeInput;
 use crate::selectors::shooting::ShootingDetail;
 
 // ============================================ PUBLIC =============================================
@@ -93,21 +95,73 @@ impl Main {
             
         });
 
+        
+        let roi = Arc::new(Mutex::new(self.view_state.camera_properties
+            .clone()
+            .map(|prop| prop.basic.roi).unwrap_or(ExposureArea {
+                x: 0, y: 0, width: 0, height: 0
+            })));
+        let roi_x = roi.clone();
+        let roi_w = roi.clone();
+        let roi_y = roi.clone();
+        let roi_h = roi.clone();
+            
+        let roi_changed = ctx.link().callback(move |_| {
+            let roi = roi.lock().unwrap();
+            let value = (roi.x, roi.y, roi.width, roi.height);
+            Msg::ParamUpdate(CameraParamMessage::SetRoi(value))
+        });
+
+        let exposure = self.view_state.camera_properties
+        .clone()
+        .map(|prop| prop.basic.exposure).unwrap_or(0 as f32);
+
+        let exposure_str = {
+            if exposure < 0.001 {
+                format!("{:5.2} us", (exposure * 1000.0))
+            }
+            else if exposure < 1.0 {
+                format!("{:5.2} ms", (exposure * 1000000.0))
+            }
+            else {
+                format!("{:.2} s", exposure)
+            }
+        };
+
         html! {
             <div>
-                // <p>{"Autoexposure: "}<CheckBox {autoexp_changed} value={self.view_state.camera_params.autoexp} />
-                // </p>
                 <BoolSelector
                     name = "Autoexposure"
                     selected_value = {self.view_state.camera_params.autoexp}
                     value_changed = {autoexp_changed}
                 />
-                <p>{"Current Exposure: "}{
-                    self.view_state.camera_params
-                    .time
-                }
-                {" s"}
+                <p>{"Current Exposure: "}{exposure_str}</p>
+                <div>
+                <p> {"Region of Interest"} </p>
+                <p> {"Origin: X "}
+                    <UsizeInput
+                        value={roi_x.lock().unwrap().x}
+                        on_change={move |value| {roi_x.lock().unwrap().x = value}}
+                    />
+                    {" Y "}
+                    <UsizeInput
+                        value={roi_y.lock().unwrap().y}
+                        on_change={move |value| {roi_y.lock().unwrap().y = value}}
+                    />
                 </p>
+                <p> {"Size: "}
+                    <UsizeInput
+                        value={roi_w.lock().unwrap().width}
+                        on_change={move |value| {roi_w.lock().unwrap().x = value}}
+                    />
+                    {" x "}
+                    <UsizeInput
+                        value={roi_h.lock().unwrap().height}
+                        on_change={move |value| {roi_h.lock().unwrap().x = value}}
+                    />
+                </p>
+                <button onclick={roi_changed}>{"Update ROI"}</button>
+                </div>
                 <FloatSelector
                     name="Set camera gain"
                     config={self.view_state.config.gain.clone()}

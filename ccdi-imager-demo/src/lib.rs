@@ -1,7 +1,7 @@
 use std::{fmt::Debug, cmp::min};
 
 use ccdi_imager_interface::{
-    ImagerDriver, ImagerDevice, ImagerProperties, DeviceDescriptor, DeviceProperty, BasicProperties, ExposureParams, TemperatureRequest
+    ImagerDriver, ImagerDevice, ImagerProperties, DeviceDescriptor, DeviceProperty, BasicProperties, ExposureParams, TemperatureRequest, ExposureArea
 };
 
 // ============================================ PUBLIC =============================================
@@ -40,7 +40,14 @@ impl ImagerDevice for DemoImagerDevice {
             basic: BasicProperties {
                 width: 6000,
                 height: 4000,
-                temperature: self.temperature
+                temperature: self.temperature,
+                exposure: 0.1,
+                roi: ExposureArea {
+                    x: 0,
+                    y: 0, 
+                    width: 6000,
+                    height: 4000
+                },
             },
             other: list_demo_properties(&self)
         })

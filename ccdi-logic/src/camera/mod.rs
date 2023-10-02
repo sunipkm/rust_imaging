@@ -1,20 +1,20 @@
-mod properties;
-mod exposure;
-mod connected;
 mod command;
+mod connected;
+mod exposure;
+mod properties;
 
 use std::sync::{mpsc::Sender, Arc};
 
 use ccdi_common::{
-    ConnectionState, ViewState, LogicStatus, ExposureCommand, ClientMessage, ProcessMessage,
-    CameraParams, CameraParamMessage, StorageState, StorageMessage, IoMessage, StorageDetail
+    CameraParamMessage, CameraParams, ClientMessage, ConnectionState, ExposureCommand, IoMessage,
+    LogicStatus, ProcessMessage, StorageDetail, StorageMessage, StorageState, ViewState,
 };
-use ccdi_imager_interface::{ImagerDriver, DeviceDescriptor};
+use ccdi_imager_interface::{DeviceDescriptor, ImagerDriver};
 use log::info;
 
 use crate::ServiceConfig;
 
-use self::{connected::ConnectedCameraController, command::execute_command};
+use self::{command::execute_command, connected::ConnectedCameraController};
 
 // ============================================ PUBLIC =============================================
 
@@ -60,7 +60,7 @@ impl CameraController {
 
     pub fn periodic(&mut self) -> (Vec<ClientMessage>, Vec<IoMessage>) {
         if self.turnning_off {
-            return (vec![], vec![])
+            return (vec![], vec![]);
         }
 
         let old_state = self.state;
@@ -87,9 +87,7 @@ impl CameraController {
             messages.append(&mut camera.flush_messages());
         }
 
-        let states = vec![
-            IoMessage::SetExposureActive(self.exposure_active())
-        ];
+        let states = vec![IoMessage::SetExposureActive(self.exposure_active())];
 
         (messages, states)
     }
@@ -104,14 +102,16 @@ impl CameraController {
             detail: self.detail.clone(),
             status: LogicStatus {
                 camera: self.connection_state(),
-                exposure: self.connected.as_ref().map(|cam| cam.exposure_status())
+                exposure: self
+                    .connected
+                    .as_ref()
+                    .map(|cam| cam.exposure_status())
                     .unwrap_or(ConnectionState::Disconnected),
                 storage: self.storage_status.clone(),
                 trigger: into_state(self.trigger_active),
                 required: into_state(self.camera_params.trigger_required),
                 save: into_state(self.storage_detail.storage_enabled),
                 loop_enabled: into_state(self.camera_params.loop_enabled),
-                
             },
             camera_properties: self.connected.as_ref().map(|cam| cam.get_properties()),
             camera_params: self.camera_params.clone(),
@@ -131,14 +131,23 @@ impl CameraController {
             SetTime(time) => self.camera_params.time = time,
             SetRenderingType(rendering) => self.camera_params.rendering = rendering,
             SetTriggerRequired(value) => self.camera_params.trigger_required = value,
-            SetAutoExp(value) => {info!("Autoexposure: {}", value); self.camera_params.autoexp = value;},
+            SetAutoExp(value) => {
+                info!("Autoexposure: {}", value);
+                self.camera_params.autoexp = value;
+            }
             SetPercentilePix(value) => self.camera_params.percentile_pix = value,
             SetPixelTgt(value) => self.camera_params.pixel_tgt = value,
             SetPixelTol(value) => self.camera_params.pixel_tol = value,
-            SetRoi((x, y, w, h)) => {self.camera_params.x = x; self.camera_params.y = y; self.camera_params.w = w; self.camera_params.h = h;},
+            SetRoi((x, y, w, h)) => {
+                info!("New ROI: X {} Y {}, {} x {}", x, y, w, h);
+                self.camera_params.x = x;
+                self.camera_params.y = y;
+                self.camera_params.w = w;
+                self.camera_params.h = h;
+            }
         }
 
-        if let Some(camera) =  self.connected.as_mut() {
+        if let Some(camera) = self.connected.as_mut() {
             camera.update_camera_params(self.camera_params.clone());
         }
     }
@@ -147,11 +156,9 @@ impl CameraController {
         match self.connected.as_mut() {
             None => self.set_detail("Not connected - cannot handle exposure command"),
             Some(connected) => match connected.exposure_command(command) {
-                Ok(_) => {},
-                Err(message) => self.set_detail(
-                    &format!("Exposure command failed: {}", message)
-                ),
-            }
+                Ok(_) => {}
+                Err(message) => self.set_detail(&format!("Exposure command failed: {}", message)),
+            },
         }
     }
 
@@ -187,7 +194,9 @@ impl CameraController {
 
 impl CameraController {
     fn exposure_active(&self) -> bool {
-        let exposure_status = self.connected.as_ref()
+        let exposure_status = self
+            .connected
+            .as_ref()
             .map(|cam| cam.exposure_status())
             .unwrap_or(ConnectionState::Disconnected);
 
@@ -228,8 +237,8 @@ impl CameraController {
                     self.set_detail("No devices present in list");
                     State::Error
                 }
-                [device_id, ..] => self.connect_and_init(device_id)
-            }
+                [device_id, ..] => self.connect_and_init(device_id),
+            },
         }
     }
 
@@ -238,18 +247,21 @@ impl CameraController {
             Err(_) => {
                 self.set_detail("Connect device failed");
                 State::Error
-            },
+            }
             Ok(device) => {
                 self.set_detail("Device connected, reading basic info");
 
                 match ConnectedCameraController::new(
-                    device, self.config.render_size, self.process_tx.clone(), self.storage_tx.clone()
+                    device,
+                    self.config.render_size,
+                    self.process_tx.clone(),
+                    self.storage_tx.clone(),
                 ) {
                     Ok(connected) => {
                         self.set_detail("Camera initialized");
                         self.connected = Some(connected);
                         State::Connected
-                    },
+                    }
                     Err(message) => {
                         self.set_detail(&format!("Init failed: {}", message));
                         self.connected = None;
@@ -263,9 +275,7 @@ impl CameraController {
     fn handle_connected_state(&mut self) -> State {
         if let Some(ref mut controller) = self.connected {
             match controller.periodic(self.camera_params.temperature) {
-                Ok(_) => {
-                    State::Connected
-                },
+                Ok(_) => State::Connected,
                 Err(message) => {
                     self.set_detail(&format!("Periodic task failed: {}", message));
                     self.connected = None;
@@ -281,5 +291,5 @@ impl CameraController {
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 enum State {
     Error,
-    Connected
+    Connected,
 }
