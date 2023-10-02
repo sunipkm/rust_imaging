@@ -57,6 +57,8 @@ pub struct ExposureParams {
     pub time: f64,
     pub area: ExposureArea,
     pub autoexp: bool,
+    pub flipx: bool,
+    pub flipy: bool,
     pub percentile_pix: f32,
     pub pixel_tgt: f32,
     pub pixel_tol: f32,

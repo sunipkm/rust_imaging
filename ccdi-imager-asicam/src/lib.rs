@@ -119,7 +119,7 @@ impl ImagerDevice for ASICameraImager {
                 }
             }
         };
-        
+
         self.device.set_roi(&roi).map_err(|x| x.to_string())?;
         self.device.start_exposure().map_err(|x| x.to_string())?;
         Ok(())
@@ -130,7 +130,7 @@ impl ImagerDevice for ASICameraImager {
     }
 
     fn download_image(&mut self, params: &mut ExposureParams) -> Result<Vec<u16>, String> {
-        let img = self.device.download_image().map_err(|x| x.to_string())?;
+        let mut img = self.device.download_image().map_err(|x| x.to_string())?;
         if params.autoexp {
             if let Ok((exposure, _)) = img.find_optimum_exposure(
                 params.percentile_pix,
@@ -148,6 +148,14 @@ impl ImagerDevice for ASICameraImager {
                     .map_err(|x| x.to_string())?;
                 params.time = exposure.as_secs_f64();
             }
+        }
+        if params.flipx {
+            let bimg = img.get_image_mut();
+            bimg.fliph();
+        }
+        if params.flipy {
+            let bimg = img.get_image_mut();
+            bimg.flipv();
         }
         let roi = self.device.get_roi();
         let width = roi.x_max - roi.x_min;

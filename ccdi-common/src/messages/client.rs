@@ -64,6 +64,8 @@ pub struct CameraParams {
     pub y: usize,
     pub w: usize,
     pub h: usize,
+    pub flipx: bool,
+    pub flipy: bool,
 }
 
 impl CameraParams {
@@ -84,7 +86,9 @@ impl CameraParams {
             x: roi.x,
             y: roi.y,
             w: roi.width,
-            h: roi.height
+            h: roi.height,
+            flipx: false,
+            flipy: false,
         }
     }
 }

@@ -150,6 +150,8 @@ impl ExposureController {
                 height: h
             },
             autoexp: self.camera_params.autoexp,
+            flipx: self.camera_params.flipx,
+            flipy: self.camera_params.flipy,
             pixel_tgt: self.camera_params.pixel_tgt,
             pixel_tol: self.camera_params.pixel_tol,
             percentile_pix: self.camera_params.percentile_pix,

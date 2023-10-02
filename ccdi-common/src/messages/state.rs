@@ -38,6 +38,8 @@ pub enum CameraParamMessage {
     SetPixelTgt(f32),
     SetPixelTol(f32),
     SetRoi((usize, usize, usize, usize)),
+    SetFlipX(bool),
+    SetFlipY(bool),
 }
 
 #[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]

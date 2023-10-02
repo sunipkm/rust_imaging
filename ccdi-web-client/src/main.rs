@@ -100,6 +100,14 @@ impl Main {
             .link()
             .callback(|value: bool| Msg::ParamUpdate(CameraParamMessage::SetAutoExp(value)));
 
+        let flipx_changed = ctx
+            .link()
+            .callback(|value: bool| Msg::ParamUpdate(CameraParamMessage::SetFlipX(value)));
+
+        let flipy_changed = ctx
+            .link()
+            .callback(|value: bool| Msg::ParamUpdate(CameraParamMessage::SetFlipY(value)));
+
         let x = self.x.clone();
         let y = self.y.clone();
         let w = self.w.clone();
@@ -196,6 +204,19 @@ impl Main {
                 <p>{"Current Exposure: "}{exposure_str}</p>
                 <div>
                 <p> {"Region of Interest"} </p>
+                <p>
+                <BoolSelector
+                    name = "Flip X"
+                    selected_value = {self.view_state.camera_params.flipx}
+                    value_changed = {flipx_changed}
+                />
+                {" "}
+                <BoolSelector
+                    name = "Flip Y"
+                    selected_value = {self.view_state.camera_params.flipx}
+                    value_changed = {flipy_changed}
+                />
+                </p>
                 <p> {"Origin: X "}
                     <UsizeInput
                         value={*x.lock().unwrap()}
