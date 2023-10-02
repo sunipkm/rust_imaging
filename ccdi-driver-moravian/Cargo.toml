@@ -1,9 +1,0 @@
-[package]
-name = "ccdi-driver-moravian"
-version = "0.1.0"
-authors = ["vchvatal"]
-edition = "2021"
-
-[build-dependencies]
-bindgen = "0.66.1"
-cc = "1.0.73"
