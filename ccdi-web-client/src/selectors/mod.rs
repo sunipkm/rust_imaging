@@ -6,3 +6,4 @@ pub mod rendering;
 pub mod composition;
 pub mod shooting;
 pub mod float;
+pub mod bool;

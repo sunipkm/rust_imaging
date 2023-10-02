@@ -6,13 +6,13 @@ use warp::{Filter, Rejection, Reply};
 pub fn static_files_rules() -> impl Filter<Extract = impl Reply, Error = Rejection> + Copy {
     let index = warp::path::end().map(|| warp::reply::html(INDEX));
 
-    let wasm = warp::path("ccdi-web-client.wasm")
+    let wasm = warp::path("ccdi-web-client_bg.wasm")
         .map(|| warp::reply::with_header(WASM, "Content-Type", "application/wasm"));
 
     let js = warp::path("ccdi-web-client.js")
         .map(|| warp::reply::with_header(JS, "Content-Type", "text/javascript"));
 
-    let css = warp::path("ccdi-web-client.css")
+    let css = warp::path("index.css")
         .map(|| warp::reply::with_header(CSS, "Content-Type", "text/css"));
 
     let static_files = wasm.or(js).or(css).or(index);
@@ -23,6 +23,6 @@ pub fn static_files_rules() -> impl Filter<Extract = impl Reply, Error = Rejecti
 // =========================================== PRIVATE =============================================
 
 const INDEX: &[u8] = include_bytes!("static/index.html");
-const WASM: &[u8] = include_bytes!("static/ccdi-web-client.wasm");
+const WASM: &[u8] = include_bytes!("static/ccdi-web-client_bg.wasm");
 const JS: &[u8] = include_bytes!("static/ccdi-web-client.js");
-const CSS: &[u8] = include_bytes!("static/ccdi-web-client.css");
+const CSS: &[u8] = include_bytes!("static/index.css");

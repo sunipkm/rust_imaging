@@ -131,7 +131,7 @@ impl CameraController {
             SetTime(time) => self.camera_params.time = time,
             SetRenderingType(rendering) => self.camera_params.rendering = rendering,
             SetTriggerRequired(value) => self.camera_params.trigger_required = value,
-            SetAutoExp(value) => self.camera_params.autoexp = value,
+            SetAutoExp(value) => {info!("Autoexposure: {}", value); self.camera_params.autoexp = value;},
             SetPercentilePix(value) => self.camera_params.percentile_pix = value,
             SetPixelTgt(value) => self.camera_params.pixel_tgt = value,
             SetPixelTol(value) => self.camera_params.pixel_tol = value,

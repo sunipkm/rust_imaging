@@ -22,6 +22,7 @@ use selectors::rendering::RenderingSelector;
 
 use crate::components::system::System;
 use crate::selectors::float::FloatSelector;
+use crate::selectors::bool::BoolSelector;
 use crate::selectors::shooting::ShootingDetail;
 
 // ============================================ PUBLIC =============================================
@@ -87,26 +88,26 @@ impl Main {
             Msg::ParamUpdate(CameraParamMessage::SetRenderingType(value))
         });
 
+        let autoexp_changed = ctx.link().callback(|value: bool| {
+            Msg::ParamUpdate(CameraParamMessage::SetAutoExp(value))
+            
+        });
+
         html! {
             <div>
-                <p>{"Autoexposure"}</p>
-                <div>{
-                    if self.view_state.camera_params.autoexp
-                    {
-                        "Enabled"
-                    }
-                    else
-                    {
-                        "Disabled"
-                    }
-                }
-                </div>
-                <p>{"Current Exposure"}</p>
-                <div>{
+                // <p>{"Autoexposure: "}<CheckBox {autoexp_changed} value={self.view_state.camera_params.autoexp} />
+                // </p>
+                <BoolSelector
+                    name = "Autoexposure"
+                    selected_value = {self.view_state.camera_params.autoexp}
+                    value_changed = {autoexp_changed}
+                />
+                <p>{"Current Exposure: "}{
                     self.view_state.camera_params
                     .time
                 }
-                </div>
+                {" s"}
+                </p>
                 <FloatSelector
                     name="Set camera gain"
                     config={self.view_state.config.gain.clone()}
@@ -142,14 +143,17 @@ impl Main {
 
         html! {
             <div>
-                <p>{"Chip temperature"}</p>
-                <div>{
+                <p>{"Chip temperature: "}
+                {
                     self.view_state.camera_properties
                         .clone()
                         .map(|prop| prop.basic.temperature.to_string())
                         .unwrap_or(String::from("?"))
-                    }
-                </div>
+                }
+                {
+                    " C"
+                }
+                </p>
                 <FloatSelector
                     name="Camera Cooling"
                     config={self.view_state.config.cooling.clone()}
