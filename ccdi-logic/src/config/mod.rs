@@ -1,4 +1,5 @@
 use std::{path::PathBuf, sync::Arc};
+use ccdi_imager_interface::ExposureArea;
 use nanocv::ImgSize;
 use serde_derive::{Serialize, Deserialize};
 
@@ -12,6 +13,7 @@ pub struct ServiceConfig {
     pub storage: String,
     pub turn_off_command: String,
     pub render_size: ImgSize,
+    pub roi: ExposureArea,
     pub gui: GuiConfig,
     pub io: IoConfig,
 }
@@ -21,6 +23,7 @@ impl Default for ServiceConfig {
         Self {
             storage: String::from("~/storage/"),
             render_size: ImgSize::new(900, 600),
+            roi: ExposureArea { x: 0, y: 0, width: 0, height: 0 },
             gui: Default::default(),
             io: Default::default(),
             turn_off_command: String::new(),
