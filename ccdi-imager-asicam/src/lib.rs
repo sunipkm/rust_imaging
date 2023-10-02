@@ -5,6 +5,8 @@ use ccdi_imager_interface::{
     ImagerProperties, TemperatureRequest, ExposureArea,
 };
 
+use log::info;
+
 use cameraunit::{CameraInfo, CameraUnit, ROI};
 use cameraunit_asi::{get_camera_ids, open_camera, CameraUnitASI};
 
@@ -135,6 +137,7 @@ impl ImagerDevice for ASICameraImager {
 
 fn read_basic_props(device: &CameraUnitASI) -> BasicProperties {
     let roi = device.get_roi();
+    info!("Read ROI: X {} Y {}, {} x {}", roi.x_min, roi.y_min, roi.x_max - roi.x_min, roi.y_max - roi.y_min);
     BasicProperties {
         width: device.get_ccd_width() as usize,
         height: device.get_ccd_height() as usize,
