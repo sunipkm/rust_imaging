@@ -7,6 +7,7 @@ use yew::prelude::*;
 #[derive(Clone, PartialEq, Properties)]
 pub struct Props {
     pub value: usize,
+    pub width: usize,
     pub on_change: Callback<usize>,
 }
 
@@ -20,13 +21,13 @@ fn get_value_from_input_event(e: InputEvent, value: usize) -> usize {
 /// Controlled Text Input Component
 #[function_component(UsizeInput)]
 pub fn usize_input(props: &Props) -> Html {
-    let Props { value, on_change } = props.clone();
+    let Props { value, width, on_change } = props.clone();
 
     let oninput = Callback::from(move |input_event: InputEvent| {
         on_change.emit(get_value_from_input_event(input_event, value));
     });
 
     html! {
-        <input type="number" value={value.to_string()} {oninput} />
+        <input type="number" maxlength={width.to_string()} size={width.to_string()} value={value.to_string()} {oninput} />
     }
 }

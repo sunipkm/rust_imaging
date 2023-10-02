@@ -43,6 +43,11 @@ pub enum UserAction {
     MenuClick(MenuItem),
 }
 
+struct RoundSize {
+    width: usize,
+    height: usize,
+}
+
 pub struct Main {
     pub image: Option<Arc<RgbImage<u16>>>,
     pub view_state: ViewState,
@@ -194,6 +199,21 @@ impl Main {
             }
         };
 
+        let csize = {
+            if let Some(prop) = &self.view_state.camera_properties {
+                let (width, height) = (prop.basic.width, prop.basic.height);
+                RoundSize {
+                    width: width.to_string().len(),
+                    height: height.to_string().len(),
+                }
+            } else {
+                RoundSize {
+                    width: 1,
+                    height: 1,
+                }
+            }
+        };
+
         html! {
             <div>
                 <BoolSelector
@@ -202,45 +222,54 @@ impl Main {
                     value_changed = {autoexp_changed}
                 />
                 <p>{"Current Exposure: "}{exposure_str}</p>
-                <div>
-                <p> {"Region of Interest"} </p>
-                <p>
-                <BoolSelector
-                    name = "Flip X"
-                    selected_value = {self.view_state.camera_params.flipx}
-                    value_changed = {flipx_changed}
-                />
-                {" "}
-                <BoolSelector
-                    name = "Flip Y"
-                    selected_value = {self.view_state.camera_params.flipx}
-                    value_changed = {flipy_changed}
-                />
-                </p>
-                <p> {"Origin: X "}
-                    <UsizeInput
-                        value={*x.lock().unwrap()}
-                        on_change={move |value| {*x.lock().unwrap() = value}}
-                    />
-                    {" Y "}
-                    <UsizeInput
-                    value={*y.lock().unwrap()}
-                    on_change={move |value| {*y.lock().unwrap() = value}}
-                    />
-                </p>
-                <p> {"Size: "}
-                    <UsizeInput
-                    value={*w.lock().unwrap()}
-                    on_change={move |value| {*w.lock().unwrap() = value}}
-                    />
-                    {" x "}
-                    <UsizeInput
-                    value={*h.lock().unwrap()}
-                    on_change={move |value| {*h.lock().unwrap() = value}}
-                    />
-                </p>
-                <button onclick={roi_changed}>{"Update ROI"}</button>
-                <button onclick={refresh_roi}>{"Refresh ROI"}</button>
+                <div style="border: 2px solid white;">
+                    <p><b>{"Region of Interest"}</b></p>
+                    <div class="float-container">
+                        <div class="float-child">
+                            <BoolSelector
+                                name = "Flip X"
+                                selected_value = {self.view_state.camera_params.flipx}
+                                value_changed = {flipx_changed}
+                            />
+                        </div>
+                        <div class="float-child">
+                            <BoolSelector
+                                name = "Flip Y"
+                                selected_value = {self.view_state.camera_params.flipy}
+                                value_changed = {flipy_changed}
+                            />
+                        </div>
+                    </div>
+                    <br/>
+                    <p> {"Origin: X "}
+                        <UsizeInput
+                            value={*x.lock().unwrap()}
+                            width={csize.width}
+                            on_change={move |value| {*x.lock().unwrap() = value}}
+                        />
+                        {" Y "}
+                        <UsizeInput
+                        value={*y.lock().unwrap()}
+                        width={csize.height}
+                        on_change={move |value| {*y.lock().unwrap() = value}}
+                        />
+                    </p>
+                    <p> {"Size: "}
+                        <UsizeInput
+                        value={*w.lock().unwrap()}
+                        width={csize.width}
+                        on_change={move |value| {*w.lock().unwrap() = value}}
+                        />
+                        {" x "}
+                        <UsizeInput
+                        value={*h.lock().unwrap()}
+                        width={csize.height}
+                        on_change={move |value| {*h.lock().unwrap() = value}}
+                        />
+                    </p>
+
+                    <button onclick={roi_changed}>{"Update ROI"}</button>
+                    <button onclick={refresh_roi}>{"Refresh ROI"}</button>
                 </div>
                 <FloatSelector
                     name="Set camera gain"
