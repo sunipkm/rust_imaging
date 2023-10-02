@@ -19,3 +19,4 @@ wasm-bindgen = "*"
 ccdi-common = { path = "../ccdi-common" }
 ccdi-image = { path = "../ccdi-image" }
 ccdi-imager-interface = { path = "../ccdi-imager-interface" }
+once_cell = "1.18.0"

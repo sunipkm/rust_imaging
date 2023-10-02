@@ -3,6 +3,7 @@ mod connection;
 mod selectors;
 
 use std::sync::{Arc, Mutex};
+use once_cell::sync::Lazy;
 
 use ccdi_common::*;
 use ccdi_imager_interface::ExposureArea;
@@ -155,23 +156,23 @@ impl Main {
                 <p> {"Origin: X "}
                     <UsizeInput
                         value={roi.x}
-                        on_change={move |value| {*x.clone().lock().unwrap() = value}}
+                        on_change={move |value| {*x.lock().unwrap() = value}}
                     />
                     {" Y "}
                     <UsizeInput
                     value={roi.y}
-                    on_change={move |value| {*y.clone().lock().unwrap() = value}}
+                    on_change={move |value| {*y.lock().unwrap() = value}}
                     />
                 </p>
                 <p> {"Size: "}
                     <UsizeInput
                     value={roi.width}
-                    on_change={move |value| {*w.clone().lock().unwrap() = value}}
+                    on_change={move |value| {*w.lock().unwrap() = value}}
                     />
                     {" x "}
                     <UsizeInput
                     value={roi.height}
-                    on_change={move |value| {*h.clone().lock().unwrap() = value}}
+                    on_change={move |value| {*h.lock().unwrap() = value}}
                     />
                 </p>
                 <button onclick={roi_changed}>{"Update ROI"}</button>
@@ -289,16 +290,21 @@ impl Component for Main {
     type Properties = ();
 
     fn create(_ctx: &Context<Self>) -> Self {
+        static X: Lazy<Arc<Mutex<usize>>> = Lazy::new( || {Arc::new(Mutex::new(0))});
+        static Y: Lazy<Arc<Mutex<usize>>> = Lazy::new( || {Arc::new(Mutex::new(0))});
+        static W: Lazy<Arc<Mutex<usize>>> = Lazy::new( || {Arc::new(Mutex::new(0))});
+        static H: Lazy<Arc<Mutex<usize>>> = Lazy::new( || {Arc::new(Mutex::new(0))});
+
         Self {
             image: None,
             view_state: Default::default(),
             selected_menu: MenuItem::Composition,
             connection_state: ConnectionState::Disconnected,
             connection_context: None,
-            x: Arc::new(Mutex::new(0)),
-            y: Arc::new(Mutex::new(0)),
-            w: Arc::new(Mutex::new(0)),
-            h: Arc::new(Mutex::new(0)),
+            x: X.clone(),
+            y: Y.clone(),
+            w: W.clone(),
+            h: H.clone(),
         }
     }
 
