@@ -2,8 +2,8 @@ mod components;
 mod connection;
 mod selectors;
 
-use std::sync::{Arc, Mutex};
 use once_cell::sync::Lazy;
+use std::sync::{Arc, Mutex};
 
 use ccdi_common::*;
 use ccdi_imager_interface::ExposureArea;
@@ -23,10 +23,10 @@ use selectors::picture::Picture;
 use selectors::rendering::RenderingSelector;
 
 use crate::components::system::System;
-use crate::selectors::float::FloatSelector;
 use crate::selectors::bool::BoolSelector;
-use crate::selectors::usize::UsizeInput;
+use crate::selectors::float::FloatSelector;
 use crate::selectors::shooting::ShootingDetail;
+use crate::selectors::usize::UsizeInput;
 
 // ============================================ PUBLIC =============================================
 
@@ -79,7 +79,7 @@ impl Main {
     }
 
     fn render_composition(&self, ctx: &Context<Self>) -> Html {
-        static mut FIRST_CALL: bool = true;
+        static FIRST_CALL: Lazy<Arc<Mutex<bool>>> = Lazy::new(|| Arc::new(Mutex::new(true)));
         let action = ctx
             .link()
             .callback(|action: StateMessage| Msg::SendMessage(action));
@@ -96,58 +96,68 @@ impl Main {
             Msg::ParamUpdate(CameraParamMessage::SetRenderingType(value))
         });
 
-        let autoexp_changed = ctx.link().callback(|value: bool| {
-            Msg::ParamUpdate(CameraParamMessage::SetAutoExp(value))
-            
-        });
-        
-        let x= self.x.clone();
-        let y= self.y.clone();
-        let w= self.w.clone();
-        let h= self.h.clone();
+        let autoexp_changed = ctx
+            .link()
+            .callback(|value: bool| Msg::ParamUpdate(CameraParamMessage::SetAutoExp(value)));
 
-        if unsafe { FIRST_CALL } {
-            let roi = self.view_state.camera_properties
-            .clone()
-            .map(|prop| prop.basic.roi).unwrap_or(ExposureArea {
-                x: 0, y: 0, width: 0, height: 0
-            });
+        let x = self.x.clone();
+        let y = self.y.clone();
+        let w = self.w.clone();
+        let h = self.h.clone();
 
-            *x.lock().unwrap() = roi.x;
-            *y.lock().unwrap() = roi.y;
-            *w.lock().unwrap() = roi.width;
-            *h.lock().unwrap() = roi.height;
+        {
+            let mut cond = FIRST_CALL.lock().unwrap();
+            if *cond {
+                let roi = self
+                    .view_state
+                    .camera_properties
+                    .clone()
+                    .map(|prop| prop.basic.roi)
+                    .unwrap_or(ExposureArea {
+                        x: 0,
+                        y: 0,
+                        width: 0,
+                        height: 0,
+                    });
 
-            unsafe {FIRST_CALL = false};
+                *x.lock().unwrap() = roi.x;
+                *y.lock().unwrap() = roi.y;
+                *w.lock().unwrap() = roi.width;
+                *h.lock().unwrap() = roi.height;
+
+                *cond = false;
+            }
         }
 
         let x_ = self.x.clone();
         let y_ = self.y.clone();
         let w_ = self.w.clone();
         let h_ = self.h.clone();
-            
+
         let roi_changed = ctx.link().callback(move |_| {
             let value = (
-                *x_.clone().lock().unwrap(), 
-                *y_.clone().lock().unwrap(), 
-                *w_.clone().lock().unwrap(), 
-                *h_.clone().lock().unwrap(), 
+                *x_.clone().lock().unwrap(),
+                *y_.clone().lock().unwrap(),
+                *w_.clone().lock().unwrap(),
+                *h_.clone().lock().unwrap(),
             );
+            *FIRST_CALL.clone().lock().unwrap() = true;
             Msg::ParamUpdate(CameraParamMessage::SetRoi(value))
         });
 
-        let exposure = self.view_state.camera_properties
-        .clone()
-        .map(|prop| prop.basic.exposure).unwrap_or(0 as f32);
+        let exposure = self
+            .view_state
+            .camera_properties
+            .clone()
+            .map(|prop| prop.basic.exposure)
+            .unwrap_or(0 as f32);
 
         let exposure_str = {
             if exposure < 0.001 {
                 format!("{:5.2} us", (exposure * 1000000.0))
-            }
-            else if exposure < 1.0 {
+            } else if exposure < 1.0 {
                 format!("{:5.2} ms", (exposure * 1000.0))
-            }
-            else {
+            } else {
                 format!("{:.2} s", exposure)
             }
         };
@@ -299,10 +309,10 @@ impl Component for Main {
     type Properties = ();
 
     fn create(_ctx: &Context<Self>) -> Self {
-        static X: Lazy<Arc<Mutex<usize>>> = Lazy::new( || {Arc::new(Mutex::new(0))});
-        static Y: Lazy<Arc<Mutex<usize>>> = Lazy::new( || {Arc::new(Mutex::new(0))});
-        static W: Lazy<Arc<Mutex<usize>>> = Lazy::new( || {Arc::new(Mutex::new(0))});
-        static H: Lazy<Arc<Mutex<usize>>> = Lazy::new( || {Arc::new(Mutex::new(0))});
+        static X: Lazy<Arc<Mutex<usize>>> = Lazy::new(|| Arc::new(Mutex::new(0)));
+        static Y: Lazy<Arc<Mutex<usize>>> = Lazy::new(|| Arc::new(Mutex::new(0)));
+        static W: Lazy<Arc<Mutex<usize>>> = Lazy::new(|| Arc::new(Mutex::new(0)));
+        static H: Lazy<Arc<Mutex<usize>>> = Lazy::new(|| Arc::new(Mutex::new(0)));
 
         Self {
             image: None,
