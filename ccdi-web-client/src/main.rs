@@ -134,6 +134,11 @@ impl Main {
         let w_ = self.w.clone();
         let h_ = self.h.clone();
 
+        let xp = self.x.clone();
+        let yp = self.y.clone();
+        let wp = self.w.clone();
+        let hp = self.h.clone();
+
         let roi_changed = ctx.link().callback(move |_| {
             let value = (
                 *x_.clone().lock().unwrap(),
@@ -144,6 +149,25 @@ impl Main {
             *FIRST_CALL.clone().lock().unwrap() = true;
             Msg::ParamUpdate(CameraParamMessage::SetRoi(value))
         });
+
+        let roi = self
+            .view_state
+            .camera_properties
+            .clone()
+            .map(|prop| prop.basic.roi)
+            .unwrap_or(ExposureArea {
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+            });
+
+        let refresh_roi = move |_| {
+            *xp.lock().unwrap() = roi.x;
+            *yp.lock().unwrap() = roi.y;
+            *wp.lock().unwrap() = roi.width;
+            *hp.lock().unwrap() = roi.height;
+        };
 
         let exposure = self
             .view_state
@@ -195,6 +219,7 @@ impl Main {
                     />
                 </p>
                 <button onclick={roi_changed}>{"Update ROI"}</button>
+                <button onclick={refresh_roi}>{"Refresh ROI"}</button>
                 </div>
                 <FloatSelector
                     name="Set camera gain"
