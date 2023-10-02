@@ -96,19 +96,28 @@ impl Main {
         });
 
         
-        let roi = Arc::new(Mutex::new(self.view_state.camera_properties
+        let roi = self.view_state.camera_properties
             .clone()
             .map(|prop| prop.basic.roi).unwrap_or(ExposureArea {
                 x: 0, y: 0, width: 0, height: 0
-            })));
-        let roi_x = roi.clone();
-        let roi_w = roi.clone();
-        let roi_y = roi.clone();
-        let roi_h = roi.clone();
+            });
+        let x = Arc::new(Mutex::new(roi.x));
+        let y = Arc::new(Mutex::new(roi.y));
+        let w = Arc::new(Mutex::new(roi.width));
+        let h = Arc::new(Mutex::new(roi.height));
+        
+        let x_ = x.clone();
+        let y_ = y.clone();
+        let w_ = w.clone();
+        let h_ = h.clone();
             
         let roi_changed = ctx.link().callback(move |_| {
-            let roi = roi.lock().unwrap();
-            let value = (roi.x, roi.y, roi.width, roi.height);
+            let value = (
+                *x_.clone().lock().unwrap(), 
+                *y_.clone().lock().unwrap(), 
+                *w_.clone().lock().unwrap(), 
+                *h_.clone().lock().unwrap(), 
+            );
             Msg::ParamUpdate(CameraParamMessage::SetRoi(value))
         });
 
@@ -118,10 +127,10 @@ impl Main {
 
         let exposure_str = {
             if exposure < 0.001 {
-                format!("{:5.2} us", (exposure * 1000.0))
+                format!("{:5.2} us", (exposure * 1000000.0))
             }
             else if exposure < 1.0 {
-                format!("{:5.2} ms", (exposure * 1000000.0))
+                format!("{:5.2} ms", (exposure * 1000.0))
             }
             else {
                 format!("{:.2} s", exposure)
@@ -140,24 +149,24 @@ impl Main {
                 <p> {"Region of Interest"} </p>
                 <p> {"Origin: X "}
                     <UsizeInput
-                        value={roi_x.lock().unwrap().x}
-                        on_change={move |value| {roi_x.lock().unwrap().x = value}}
+                        value={*x.lock().unwrap()}
+                        on_change={move |value| {*x.clone().lock().unwrap() = value}}
                     />
                     {" Y "}
                     <UsizeInput
-                        value={roi_y.lock().unwrap().y}
-                        on_change={move |value| {roi_y.lock().unwrap().y = value}}
+                    value={*y.lock().unwrap()}
+                    on_change={move |value| {*y.clone().lock().unwrap() = value}}
                     />
                 </p>
                 <p> {"Size: "}
                     <UsizeInput
-                        value={roi_w.lock().unwrap().width}
-                        on_change={move |value| {roi_w.lock().unwrap().x = value}}
+                    value={*w.lock().unwrap()}
+                    on_change={move |value| {*w.clone().lock().unwrap() = value}}
                     />
                     {" x "}
                     <UsizeInput
-                        value={roi_h.lock().unwrap().height}
-                        on_change={move |value| {roi_h.lock().unwrap().x = value}}
+                    value={*h.lock().unwrap()}
+                    on_change={move |value| {*h.clone().lock().unwrap() = value}}
                     />
                 </p>
                 <button onclick={roi_changed}>{"Update ROI"}</button>
