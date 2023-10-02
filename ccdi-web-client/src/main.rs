@@ -48,6 +48,10 @@ pub struct Main {
     pub connection_state: ConnectionState,
     pub connection_context: Option<Scope<ConnectionService>>,
     pub selected_menu: MenuItem,
+    pub x: Arc<Mutex<usize>>,
+    pub y: Arc<Mutex<usize>>,
+    pub w: Arc<Mutex<usize>>,
+    pub h: Arc<Mutex<usize>>,
 }
 
 impl Main {
@@ -101,15 +105,16 @@ impl Main {
             .map(|prop| prop.basic.roi).unwrap_or(ExposureArea {
                 x: 0, y: 0, width: 0, height: 0
             });
-        let x = Arc::new(Mutex::new(roi.x));
-        let y = Arc::new(Mutex::new(roi.y));
-        let w = Arc::new(Mutex::new(roi.width));
-        let h = Arc::new(Mutex::new(roi.height));
         
-        let x_ = x.clone();
-        let y_ = y.clone();
-        let w_ = w.clone();
-        let h_ = h.clone();
+        let x= self.x.clone();
+        let y= self.y.clone();
+        let w= self.w.clone();
+        let h= self.h.clone();
+
+        let x_ = self.x.clone();
+        let y_ = self.y.clone();
+        let w_ = self.w.clone();
+        let h_ = self.h.clone();
             
         let roi_changed = ctx.link().callback(move |_| {
             let value = (
@@ -149,23 +154,23 @@ impl Main {
                 <p> {"Region of Interest"} </p>
                 <p> {"Origin: X "}
                     <UsizeInput
-                        value={*x.lock().unwrap()}
+                        value={roi.x}
                         on_change={move |value| {*x.clone().lock().unwrap() = value}}
                     />
                     {" Y "}
                     <UsizeInput
-                    value={*y.lock().unwrap()}
+                    value={roi.y}
                     on_change={move |value| {*y.clone().lock().unwrap() = value}}
                     />
                 </p>
                 <p> {"Size: "}
                     <UsizeInput
-                    value={*w.lock().unwrap()}
+                    value={roi.width}
                     on_change={move |value| {*w.clone().lock().unwrap() = value}}
                     />
                     {" x "}
                     <UsizeInput
-                    value={*h.lock().unwrap()}
+                    value={roi.height}
                     on_change={move |value| {*h.clone().lock().unwrap() = value}}
                     />
                 </p>
@@ -290,6 +295,10 @@ impl Component for Main {
             selected_menu: MenuItem::Composition,
             connection_state: ConnectionState::Disconnected,
             connection_context: None,
+            x: Arc::new(Mutex::new(0)),
+            y: Arc::new(Mutex::new(0)),
+            w: Arc::new(Mutex::new(0)),
+            h: Arc::new(Mutex::new(0)),
         }
     }
 
