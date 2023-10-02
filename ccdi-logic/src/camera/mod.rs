@@ -47,7 +47,7 @@ impl CameraController {
             connected: None,
             detail: String::from("Started"),
             view: None,
-            camera_params: CameraParams::new(config.render_size, ExposureArea {x: 0, y: 0, width: 0, height: 0}),
+            camera_params: CameraParams::new(config.render_size, ExposureArea {x: config.roi.x, y: config.roi.y, width: config.roi.width, height: config.roi.height}),
             process_tx,
             storage_tx,
             storage_status: StorageState::Unknown,

@@ -1,5 +1,6 @@
 use std::{path::PathBuf, sync::Arc};
 use ccdi_imager_interface::ExposureArea;
+use log::info;
 use nanocv::ImgSize;
 use serde_derive::{Serialize, Deserialize};
 
@@ -53,9 +54,13 @@ impl Default for IoConfig {
 pub fn load_config_file() -> Result<Arc<ServiceConfig>, String> {
     let path = config_file_path()?;
 
-    serde_yaml::from_str::<ServiceConfig>(&read_text_file(path.as_path())?)
+    let res = serde_yaml::from_str::<ServiceConfig>(&read_text_file(path.as_path())?)
         .map_err(|err| format!("Could not load config file {}: {}", path_as_string(&path), err))
-        .map(|config| Arc::new(config))
+        .map(|config| Arc::new(config))?;
+
+    info!("Config ROI: ({}, {}) {} x {}", res.roi.x, res.roi.y, res.roi.width, res.roi.height);
+
+    Ok(res)
 }
 
 pub fn create_default_config_file() -> Result<String, String> {
