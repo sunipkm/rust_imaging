@@ -1,6 +1,6 @@
 use std::path::{PathBuf, Path};
 
-use ccdi_common::{IoMessage, StateMessage, read_text_file, log_err};
+use ccdi_common::{IoMessage, StateMessage, read_text_file};
 use log::{debug, warn, info};
 
 use crate::IoConfig;
@@ -12,7 +12,9 @@ mod led_output;
 // ============================================ PUBLIC =============================================
 
 pub struct IoManager {
+    #[allow(unused)]
     last_trigger_value: Option<bool>,
+    #[allow(unused)]
     trigger_input_path: PathBuf,
     exposure_status_path: PathBuf,
     heating_pwm: ProgrammableOutput,
@@ -78,6 +80,7 @@ impl IoManager {
 
 // =========================================== PRIVATE =============================================
 
+#[allow(unused)]
 fn read_input(path: &Path) -> Option<bool> {
     let first_char = read_text_file(path)
         .map(|string| string.chars().nth(0).unwrap_or(' '));

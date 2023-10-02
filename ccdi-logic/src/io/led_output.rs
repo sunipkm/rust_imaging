@@ -47,6 +47,7 @@ impl ProgrammableOutput {
         self.pattern = pattern;
     }
 
+    #[allow(unused)]
     pub fn iterate(&mut self) -> Result<(), String> {
         self.position += 1;
 

@@ -1,8 +1,13 @@
-use std::{fmt::Debug, time::Duration};
+use once_cell::sync::Lazy;
+use std::{
+    fmt::Debug,
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 
 use ccdi_imager_interface::{
-    BasicProperties, DeviceDescriptor, DeviceProperty, ExposureParams, ImagerDevice, ImagerDriver,
-    ImagerProperties, TemperatureRequest, ExposureArea,
+    BasicProperties, DeviceDescriptor, DeviceProperty, ExposureArea, ExposureParams, ImagerDevice,
+    ImagerDriver, ImagerProperties, TemperatureRequest,
 };
 
 use log::info;
@@ -39,14 +44,16 @@ impl ImagerDriver for ASICameraDriver {
     fn connect_device(
         &mut self,
         descriptor: &DeviceDescriptor,
+        roi_request: &ExposureArea,
     ) -> Result<Box<dyn ImagerDevice>, String> {
         let (cam, _) = open_camera(descriptor.id).map_err(|x| x.to_string())?;
-        Ok(Box::new(ASICameraImager { device: cam }))
+        Ok(Box::new(ASICameraImager { device: cam, roi: *roi_request }))
     }
 }
 
 pub struct ASICameraImager {
     device: CameraUnitASI,
+    roi: ExposureArea,
 }
 
 impl ImagerDevice for ASICameraImager {
@@ -69,6 +76,7 @@ impl ImagerDevice for ASICameraImager {
     }
 
     fn start_exposure(&mut self, params: &ExposureParams) -> Result<(), String> {
+        static FIRST_CALL: Lazy<Arc<Mutex<bool>>> = Lazy::new(|| Arc::new(Mutex::new(true)));
         self.device
             .set_gain_raw(params.gain as i64)
             .map_err(|x| x.to_string())?;
@@ -77,14 +85,41 @@ impl ImagerDevice for ASICameraImager {
                 .set_exposure(Duration::from_secs_f64(params.time))
                 .map_err(|x| x.to_string())?;
         }
-        let roi = ROI {
-            x_min: params.area.x as i32,
-            x_max: (params.area.width + params.area.x) as i32,
-            y_min: params.area.y as i32,
-            y_max: (params.area.height + params.area.y) as i32,
-            bin_x: 1,
-            bin_y: 1,
+
+        let roi = {
+            let mut val = FIRST_CALL.lock().unwrap();
+            if *val {
+                let roi = ROI {
+                    x_min: self.roi.x as i32,
+                    x_max: (self.roi.width + self.roi.x) as i32,
+                    y_min: self.roi.y as i32,
+                    y_max: (self.roi.height + self.roi.y) as i32,
+                    bin_x: 1,
+                    bin_y: 1,
+                };
+                info!(
+                    "Firstcall ROI: ({}, {}), {} x {}",
+                    roi.x_min,
+                    roi.x_max,
+                    roi.x_max - roi.x_min,
+                    roi.y_max - roi.y_min
+                );
+                *val = false;
+                roi
+            }
+            else
+            {
+                ROI {
+                    x_min: params.area.x as i32,
+                    x_max: (params.area.width + params.area.x) as i32,
+                    y_min: params.area.y as i32,
+                    y_max: (params.area.height + params.area.y) as i32,
+                    bin_x: 1,
+                    bin_y: 1,
+                }
+            }
         };
+        
         self.device.set_roi(&roi).map_err(|x| x.to_string())?;
         self.device.start_exposure().map_err(|x| x.to_string())?;
         Ok(())
@@ -101,7 +136,9 @@ impl ImagerDevice for ASICameraImager {
                 params.percentile_pix,
                 params.pixel_tgt,
                 params.pixel_tol,
-                self.device.get_min_exposure().unwrap_or(Duration::from_millis(1)),
+                self.device
+                    .get_min_exposure()
+                    .unwrap_or(Duration::from_millis(1)),
                 Duration::from_secs(60),
                 1,
                 100,
@@ -154,7 +191,7 @@ fn read_basic_props(device: &CameraUnitASI) -> BasicProperties {
             y: roi.y_min as usize,
             width: (roi.x_max - roi.x_min) as usize,
             height: (roi.y_max - roi.y_min) as usize,
-        }
+        },
     }
 }
 

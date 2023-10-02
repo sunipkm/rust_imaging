@@ -243,7 +243,7 @@ impl CameraController {
     }
 
     fn connect_and_init(&mut self, id: &DeviceDescriptor) -> State {
-        match self.driver.connect_device(id) {
+        match self.driver.connect_device(id, &self.config.roi) {
             Err(_) => {
                 self.set_detail("Connect device failed");
                 State::Error

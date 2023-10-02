@@ -11,3 +11,4 @@ cameraunit_asi = "2.1.2"
 ccdi-imager-interface = { path = "../ccdi-imager-interface" }
 ccdi-common = { path = "../ccdi-common" }
 log = "0.4.20"
+once_cell = "1.18.0"

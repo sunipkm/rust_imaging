@@ -4,7 +4,7 @@ use serde_derive::{Serialize, Deserialize};
 
 pub trait ImagerDriver {
     fn list_devices(&mut self) -> Result<Vec<DeviceDescriptor>, String>;
-    fn connect_device(&mut self, descriptor: &DeviceDescriptor) -> Result<Box<dyn ImagerDevice>, String>;
+    fn connect_device(&mut self, descriptor: &DeviceDescriptor, roi_request: &ExposureArea) -> Result<Box<dyn ImagerDevice>, String>;
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

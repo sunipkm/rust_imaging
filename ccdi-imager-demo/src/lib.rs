@@ -23,7 +23,7 @@ impl ImagerDriver for DemoImagerDriver {
         ])
     }
 
-    fn connect_device(&mut self, _descriptor: &DeviceDescriptor) -> Result<Box<dyn ImagerDevice>, String> {
+    fn connect_device(&mut self, _descriptor: &DeviceDescriptor, _: &ExposureArea) -> Result<Box<dyn ImagerDevice>, String> {
         Ok(Box::new(DemoImagerDevice { offset: 0.0, temperature: 30.0 }))
     }
 }
