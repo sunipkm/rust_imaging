@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use ccdi_imager_interface::{ImagerProperties, ExposureParams};
+use ccdi_imager_interface::{ImagerProperties, ExposureParams, ExposureArea};
 use nanocv::ImgSize;
 use serde_derive::{Serialize, Deserialize};
 
@@ -67,7 +67,7 @@ pub struct CameraParams {
 }
 
 impl CameraParams {
-    pub fn new(render_size: ImgSize) -> Self {
+    pub fn new(render_size: ImgSize, roi: ExposureArea) -> Self {
         Self {
             loop_enabled: false,
             gain: 0,
@@ -81,17 +81,17 @@ impl CameraParams {
             percentile_pix: 99.5,
             pixel_tgt: 40000./65535.,
             pixel_tol: 5000./65535.,
-            x: 0,
-            y: 0,
-            w: 0,
-            h: 0
+            x: roi.x,
+            y: roi.y,
+            w: roi.width,
+            h: roi.height
         }
     }
 }
 
 impl Default for CameraParams {
     fn default() -> Self {
-        CameraParams::new(ImgSize::new(900, 600))
+        CameraParams::new(ImgSize::new(900, 600), ExposureArea { x: 0, y: 0, width: 0, height: 0 })
     }
 }
 

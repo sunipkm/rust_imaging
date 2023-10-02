@@ -9,7 +9,7 @@ use ccdi_common::{
     CameraParamMessage, CameraParams, ClientMessage, ConnectionState, ExposureCommand, IoMessage,
     LogicStatus, ProcessMessage, StorageDetail, StorageMessage, StorageState, ViewState,
 };
-use ccdi_imager_interface::{DeviceDescriptor, ImagerDriver};
+use ccdi_imager_interface::{DeviceDescriptor, ImagerDriver, ExposureArea};
 use log::info;
 
 use crate::ServiceConfig;
@@ -47,7 +47,7 @@ impl CameraController {
             connected: None,
             detail: String::from("Started"),
             view: None,
-            camera_params: CameraParams::new(config.render_size),
+            camera_params: CameraParams::new(config.render_size, ExposureArea {x: 0, y: 0, width: 0, height: 0}),
             process_tx,
             storage_tx,
             storage_status: StorageState::Unknown,

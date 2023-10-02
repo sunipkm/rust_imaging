@@ -30,7 +30,7 @@ impl ExposureController {
     ) -> Self {
         Self {
             properties,
-            camera_params: CameraParams::new(render_size),
+            camera_params: CameraParams::new(render_size, ExposureArea { x: 0, y: 0, width: 0, height: 0 }),
             current_exposure: None,
             process_tx,
             storage_tx,
