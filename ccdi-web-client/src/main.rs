@@ -79,6 +79,7 @@ impl Main {
     }
 
     fn render_composition(&self, ctx: &Context<Self>) -> Html {
+        static mut FIRST_CALL: bool = true;
         let action = ctx
             .link()
             .callback(|action: StateMessage| Msg::SendMessage(action));
@@ -99,18 +100,26 @@ impl Main {
             Msg::ParamUpdate(CameraParamMessage::SetAutoExp(value))
             
         });
-
-        
-        let roi = self.view_state.camera_properties
-            .clone()
-            .map(|prop| prop.basic.roi).unwrap_or(ExposureArea {
-                x: 0, y: 0, width: 0, height: 0
-            });
         
         let x= self.x.clone();
         let y= self.y.clone();
         let w= self.w.clone();
         let h= self.h.clone();
+
+        if unsafe { FIRST_CALL } {
+            let roi = self.view_state.camera_properties
+            .clone()
+            .map(|prop| prop.basic.roi).unwrap_or(ExposureArea {
+                x: 0, y: 0, width: 0, height: 0
+            });
+
+            *x.lock().unwrap() = roi.x;
+            *y.lock().unwrap() = roi.y;
+            *w.lock().unwrap() = roi.width;
+            *h.lock().unwrap() = roi.height;
+
+            unsafe {FIRST_CALL = false};
+        }
 
         let x_ = self.x.clone();
         let y_ = self.y.clone();
@@ -155,23 +164,23 @@ impl Main {
                 <p> {"Region of Interest"} </p>
                 <p> {"Origin: X "}
                     <UsizeInput
-                        value={roi.x}
+                        value={*x.lock().unwrap()}
                         on_change={move |value| {*x.lock().unwrap() = value}}
                     />
                     {" Y "}
                     <UsizeInput
-                    value={roi.y}
+                    value={*y.lock().unwrap()}
                     on_change={move |value| {*y.lock().unwrap() = value}}
                     />
                 </p>
                 <p> {"Size: "}
                     <UsizeInput
-                    value={roi.width}
+                    value={*w.lock().unwrap()}
                     on_change={move |value| {*w.lock().unwrap() = value}}
                     />
                     {" x "}
                     <UsizeInput
-                    value={roi.height}
+                    value={*h.lock().unwrap()}
                     on_change={move |value| {*h.lock().unwrap() = value}}
                     />
                 </p>
