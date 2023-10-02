@@ -60,6 +60,10 @@ pub struct CameraParams {
     pub percentile_pix: f32,
     pub pixel_tgt: f32,
     pub pixel_tol: f32,
+    pub x: usize,
+    pub y: usize,
+    pub w: usize,
+    pub h: usize,
 }
 
 impl CameraParams {
@@ -77,6 +81,10 @@ impl CameraParams {
             percentile_pix: 99.5,
             pixel_tgt: 40000./65535.,
             pixel_tol: 5000./65535.,
+            x: 0,
+            y: 0,
+            w: 0,
+            h: 0
         }
     }
 }

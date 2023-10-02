@@ -18,6 +18,7 @@ pub struct ExposureController {
     process_tx: Sender<ProcessMessage>,
     storage_tx: Sender<StorageMessage>,
     trigger_active: bool,
+    save_active: bool,
 }
 
 impl ExposureController {
@@ -34,6 +35,7 @@ impl ExposureController {
             process_tx,
             storage_tx,
             trigger_active: false,
+            save_active: false,
         }
     }
 
@@ -115,20 +117,43 @@ impl ExposureController {
         result
     }
 
-    fn make_exposure_description(&self) -> ExposureParams {
+    fn make_exposure_description(&mut self) -> ExposureParams {
+        let mut x = self.camera_params.x.min(self.properties.width - 1);
+        let mut y = self.camera_params.y.min(self.properties.height - 1);
+        let mut w = self.camera_params.w.min(self.properties.width);
+        let mut h = self.camera_params.h.min(self.properties.height);
+        if w == 0 {
+            w = self.properties.width;
+        }
+        if h == 0 {
+            h = self.properties.height;
+        }
+        if x + w > self.properties.width {
+            x = 0;
+        }
+        if y + h > self.properties.height {
+            y = 0;
+        }
+
+        self.camera_params.x = x;
+        self.camera_params.y = y;
+        self.camera_params.w = w;
+        self.camera_params.h = h;
+
         ExposureParams {
             gain: self.camera_params.gain,
             time: self.camera_params.time,
             area: ExposureArea {
-                x: 0,
-                y: 0,
-                width: self.properties.width,
-                height: self.properties.height
+                x: x,
+                y: y,
+                width: w,
+                height: h
             },
             autoexp: self.camera_params.autoexp,
             pixel_tgt: self.camera_params.pixel_tgt,
             pixel_tol: self.camera_params.pixel_tol,
             percentile_pix: self.camera_params.percentile_pix,
-        }
+            save: self.save_active,
+        }        
     }
 }

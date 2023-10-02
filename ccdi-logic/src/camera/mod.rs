@@ -135,6 +135,7 @@ impl CameraController {
             SetPercentilePix(value) => self.camera_params.percentile_pix = value,
             SetPixelTgt(value) => self.camera_params.pixel_tgt = value,
             SetPixelTol(value) => self.camera_params.pixel_tol = value,
+            SetRoi((x, y, w, h)) => {self.camera_params.x = x; self.camera_params.y = y; self.camera_params.w = w; self.camera_params.h = h;},
         }
 
         if let Some(camera) =  self.connected.as_mut() {

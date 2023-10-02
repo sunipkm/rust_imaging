@@ -58,6 +58,7 @@ pub struct ExposureParams {
     pub percentile_pix: f32,
     pub pixel_tgt: f32,
     pub pixel_tol: f32,
+    pub save: bool,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

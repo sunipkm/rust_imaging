@@ -37,6 +37,7 @@ pub enum CameraParamMessage {
     SetPercentilePix(f32),
     SetPixelTgt(f32),
     SetPixelTol(f32),
+    SetRoi((usize, usize, usize, usize)),
 }
 
 #[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
