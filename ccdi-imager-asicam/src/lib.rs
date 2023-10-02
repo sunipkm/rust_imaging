@@ -112,14 +112,21 @@ impl ImagerDevice for ASICameraImager {
                 params.time = exposure.as_secs_f64();
             }
         }
+        let roi = self.device.get_roi();
+        let width = roi.x_max - roi.x_min;
+        let height = roi.y_max - roi.y_min;
+        params.area.x = roi.x_min as usize;
+        params.area.y = roi.y_min as usize;
+        params.area.width = width as usize;
+        params.area.height = height as usize;
         if let Some(img) = img.get_image().as_luma16() {
             let val = img.clone().into_vec();
             if val.len() != params.area.height * params.area.width {
                 return Err(format!(
                     "Length of image: {}, Requested size: {} x {}",
                     val.len(),
-                    params.area.width,
-                    params.area.height
+                    width,
+                    height
                 ));
             }
             return Ok(val);
