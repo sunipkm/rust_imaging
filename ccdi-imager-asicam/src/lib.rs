@@ -12,7 +12,7 @@ use ccdi_imager_interface::{
 
 use log::info;
 
-use cameraunit::{CameraInfo, CameraUnit, ROI};
+use cameraunit::{CameraInfo, CameraUnit, ROI, ImageData};
 use cameraunit_asi::{get_camera_ids, open_camera, CameraUnitASI};
 
 pub struct ASICameraDriver {}
@@ -149,13 +149,15 @@ impl ImagerDevice for ASICameraImager {
                 params.time = exposure.as_secs_f64();
             }
         }
-        if params.flipx {
+        if params.flipx || params.flipy {
             let bimg = img.get_image_mut();
-            bimg.fliph();
-        }
-        if params.flipy {
-            let bimg = img.get_image_mut();
-            bimg.flipv();
+            if params.flipx {
+                bimg.fliph();
+            }
+            if params.flipy {
+                bimg.flipv();
+            }
+            img = ImageData::new(bimg.clone(), img.get_metadata().clone());
         }
         let roi = self.device.get_roi();
         let width = roi.x_max - roi.x_min;
