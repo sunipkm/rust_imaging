@@ -150,12 +150,12 @@ impl ImagerDevice for ASICameraImager {
             }
         }
         if params.flipx || params.flipy {
-            let bimg = img.get_image_mut();
+            let mut bimg = img.get_image_mut().clone();
             if params.flipx {
-                bimg.fliph();
+                bimg = bimg.fliph();
             }
             if params.flipy {
-                bimg.flipv();
+                bimg = bimg.flipv();
             }
             img = ImageData::new(bimg.clone(), img.get_metadata().clone());
         }
