@@ -13,7 +13,7 @@ use ccdi_imager_interface::{
 use log::info;
 
 use cameraunit_asi::{
-    get_camera_ids, open_camera, CameraInfo, CameraUnit, CameraUnitASI, ImageData, SerialImageData,
+    get_camera_ids, open_camera, CameraInfo, CameraUnit, CameraUnitASI, DynamicSerialImage,
     ROI,
 };
 
@@ -139,7 +139,7 @@ impl ImagerDevice for ASICameraImager {
     fn download_image(
         &mut self,
         params: &mut ExposureParams,
-    ) -> Result<SerialImageData<u16>, String> {
+    ) -> Result<DynamicSerialImage, String> {
         let img = self.device.download_image().map_err(|x| x.to_string())?;
         if params.autoexp {
             if let Ok((exposure, _)) = img.find_optimum_exposure(
@@ -175,7 +175,7 @@ impl ImagerDevice for ASICameraImager {
         params.area.width = img.get_image().width() as usize;
         params.area.height = img.get_image().height() as usize;
 
-        Ok(img.try_into()?)
+        Ok(img.into())
     }
 
     fn set_temperature(&mut self, request: TemperatureRequest) -> Result<(), String> {

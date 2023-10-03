@@ -1,6 +1,7 @@
 use std::{cmp::min, fmt::Debug, time::SystemTime};
 
-pub use cameraunit::{ImageData, ImageMetaData, SerialImageData, SerialImagePixel, SerialImageStorageTypes};
+use cameraunit::DynamicSerialImage;
+pub use cameraunit::{ImageData, ImageMetaData, SerialImageBuffer, SerialImagePixel, SerialImageStorageTypes};
 use ccdi_imager_interface::{
     BasicProperties, DeviceDescriptor, DeviceProperty, ExposureArea, ExposureParams, ImagerDevice,
     ImagerDriver, ImagerProperties, TemperatureRequest,
@@ -72,20 +73,21 @@ impl ImagerDevice for DemoImagerDevice {
         Ok(true)
     }
 
-    fn download_image(&mut self, params: &mut ExposureParams) -> Result<SerialImageData<u16>, String> {
+    fn download_image(&mut self, params: &mut ExposureParams) -> Result<DynamicSerialImage, String> {
         let data = generate_test_image(params.area.width, params.area.height);
-        let mut img: SerialImageData<u16> = {
-            let img = DynamicImage::from(ImageBuffer::<image::Luma<u16>, Vec<u16>>::new(
-                params.area.width as u32,
-                params.area.height as u32,
-            ));
-            let mut meta: ImageMetaData = Default::default();
-            meta.timestamp = SystemTime::now();
-            meta.camera_name = "Demo Camera".to_owned();
-            ImageData::new(img, meta).try_into()?
-        };
-        let bimg = img.get_mut_data();
+        let mut img = DynamicImage::from(ImageBuffer::<image::Luma<u16>, Vec<u16>>::new(
+            params.area.width as u32,
+            params.area.height as u32,
+        ));
+        let mut meta: ImageMetaData = Default::default();
+        meta.timestamp = SystemTime::now();
+        meta.camera_name = "Demo Camera".to_owned();
+
+        let bimg = img.as_mut_luma16().unwrap();
         bimg.copy_from_slice(&data);
+
+        let mut img: DynamicSerialImage = img.into();
+        img.set_metadata(meta);
 
         Ok(img)
     }

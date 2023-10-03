@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use serialimagedata::SerialImageData;
+use serialimage::DynamicSerialImage;
 use ccdi_imager_interface::{ImagerProperties, ExposureParams, ExposureArea};
 use nanocv::ImgSize;
 use serde_derive::{Serialize, Deserialize};
@@ -21,7 +21,7 @@ pub enum ClientMessage {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct RawImage {
     pub params: ExposureParams,
-    pub data: SerialImageData<u16>
+    pub data: DynamicSerialImage
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

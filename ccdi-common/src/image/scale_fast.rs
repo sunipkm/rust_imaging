@@ -1,6 +1,7 @@
 use nanocv::{ImgSize, ImgBuf, ImgMut};
 
 use crate::{RawImage, RgbImage, RenderingType};
+use serialimage::DynamicImage;
 
 use super::{lookup::{Offset, LookupTable, scale_lookup_table}, grid::draw_thirds_grid};
 
@@ -43,7 +44,9 @@ fn scale_with_lookup_table(image: &RawImage, table: &LookupTable) -> ImgBuf<u16>
     for line in 0..size.y {
         let dst = result.line_mut(line);
         let input_line = &table.y[line];
-        let src = &image.data.get_data()[input_line*w .. (input_line + 1)*w];
+        let img: DynamicImage = DynamicImage::from(image.data.clone());
+        let img = img.as_luma16().unwrap().clone().into_vec();
+        let src = &img[input_line*w .. (input_line + 1)*w];
 
         for x in 0..size.x {
             dst[x] = src[table.x[x]];
