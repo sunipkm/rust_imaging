@@ -12,7 +12,10 @@ use ccdi_imager_interface::{
 
 use log::info;
 
-use cameraunit_asi::{get_camera_ids, open_camera, CameraUnitASI, CameraInfo, CameraUnit, ROI, ImageData, SerialImageData};
+use cameraunit_asi::{
+    get_camera_ids, open_camera, CameraInfo, CameraUnit, CameraUnitASI, ImageData, SerialImageData,
+    ROI,
+};
 
 pub struct ASICameraDriver {}
 
@@ -46,7 +49,10 @@ impl ImagerDriver for ASICameraDriver {
         roi_request: &ExposureArea,
     ) -> Result<Box<dyn ImagerDevice>, String> {
         let (cam, _) = open_camera(descriptor.id).map_err(|x| x.to_string())?;
-        Ok(Box::new(ASICameraImager { device: cam, roi: *roi_request }))
+        Ok(Box::new(ASICameraImager {
+            device: cam,
+            roi: *roi_request,
+        }))
     }
 }
 
@@ -85,6 +91,10 @@ impl ImagerDevice for ASICameraImager {
                 .map_err(|x| x.to_string())?;
         }
 
+        self.device
+            .set_flip(params.flipx, params.flipy)
+            .map_err(|x| x.to_string())?;
+
         let roi = {
             let mut val = FIRST_CALL.lock().unwrap();
             if *val {
@@ -105,9 +115,7 @@ impl ImagerDevice for ASICameraImager {
                 );
                 *val = false;
                 roi
-            }
-            else
-            {
+            } else {
                 ROI {
                     x_min: params.area.x as i32,
                     x_max: (params.area.width + params.area.x) as i32,
@@ -128,8 +136,11 @@ impl ImagerDevice for ASICameraImager {
         self.device.image_ready().map_err(|x| x.to_string())
     }
 
-    fn download_image(&mut self, params: &mut ExposureParams) -> Result<SerialImageData<u16>, String> {
-        let mut img = self.device.download_image().map_err(|x| x.to_string())?;
+    fn download_image(
+        &mut self,
+        params: &mut ExposureParams,
+    ) -> Result<SerialImageData<u16>, String> {
+        let img = self.device.download_image().map_err(|x| x.to_string())?;
         if params.autoexp {
             if let Ok((exposure, _)) = img.find_optimum_exposure(
                 params.percentile_pix,
@@ -148,16 +159,16 @@ impl ImagerDevice for ASICameraImager {
                 params.time = exposure.as_secs_f64();
             }
         }
-        if params.flipx || params.flipy {
-            let mut bimg = img.get_image_mut().clone();
-            if params.flipx {
-                bimg = bimg.fliph();
-            }
-            if params.flipy {
-                bimg = bimg.flipv();
-            }
-            img = ImageData::new(bimg.clone(), img.get_metadata().clone());
-        }
+        // if params.flipx || params.flipy {
+        //     let mut bimg = img.get_image_mut().clone();
+        //     if params.flipx {
+        //         bimg = bimg.fliph();
+        //     }
+        //     if params.flipy {
+        //         bimg = bimg.flipv();
+        //     }
+        //     img = ImageData::new(bimg.clone(), img.get_metadata().clone());
+        // }
 
         params.area.x = img.get_metadata().img_left as usize;
         params.area.y = img.get_metadata().img_top as usize;
