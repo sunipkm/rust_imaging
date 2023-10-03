@@ -1,8 +1,7 @@
 use std::path::PathBuf;
 
-use ccdi_common::{RawImage, to_string};
-use fitsio::FitsFile;
-use fitsio::images::{ImageDescription, ImageType};
+use ccdi_common::{to_string, RawImage};
+use cameraunit::ImageData;
 
 // ============================================ PUBLIC =============================================
 
@@ -11,19 +10,10 @@ pub fn save_fits_file(image: &RawImage, file_name: &str) -> Result<(), String> {
     let prefix = path.parent().ok_or(format!("Invalid path parent"))?;
     std::fs::create_dir_all(prefix).map_err(to_string)?;
 
-    let description = ImageDescription {
-        data_type: ImageType::UnsignedShort,
-        dimensions: &[image.params.area.height, image.params.area.width],
-    };
-
-    let mut fitsfile = FitsFile::create(&file_name)
-        .with_custom_primary(&description)
-        .overwrite()
-        .open()
+    let img: Result<ImageData, &'static str> = image.data.clone().try_into();
+    let img = img.map_err(to_string)?;
+    img.save_fits(prefix, "ccdi", "CCDI ASI", true, true)
         .map_err(to_string)?;
-
-    let hdu = fitsfile.primary_hdu().map_err(to_string)?;
-    hdu.write_image(&mut fitsfile, &image.data).map_err(to_string)?;
 
     Ok(())
 }

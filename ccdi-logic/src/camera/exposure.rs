@@ -1,11 +1,13 @@
-
-use std::{mem::swap, sync::{mpsc::Sender, Arc}};
+use std::{
+    mem::swap,
+    sync::{mpsc::Sender, Arc},
+};
 
 use ccdi_common::{
-    ExposureCommand, ClientMessage, RawImage, ProcessMessage, ConvertRawImage, log_err,
-    CameraParams, StorageMessage
+    log_err, CameraParams, ClientMessage, ConvertRawImage, ExposureCommand, ProcessMessage,
+    RawImage, StorageMessage,
 };
-use ccdi_imager_interface::{BasicProperties, ImagerDevice, ExposureParams, ExposureArea};
+use ccdi_imager_interface::{BasicProperties, ExposureArea, ExposureParams, ImagerDevice};
 use log::debug;
 use nanocv::ImgSize;
 
@@ -30,7 +32,15 @@ impl ExposureController {
     ) -> Self {
         Self {
             properties,
-            camera_params: CameraParams::new(render_size, ExposureArea { x: 0, y: 0, width: 0, height: 0 }),
+            camera_params: CameraParams::new(
+                render_size,
+                ExposureArea {
+                    x: 0,
+                    y: 0,
+                    width: 0,
+                    height: 0,
+                },
+            ),
             current_exposure: None,
             process_tx,
             storage_tx,
@@ -41,7 +51,7 @@ impl ExposureController {
 
     pub fn periodic(
         &mut self,
-        device: &mut dyn ImagerDevice
+        device: &mut dyn ImagerDevice,
     ) -> Result<Vec<ClientMessage>, String> {
         if self.current_exposure.is_some() && device.image_ready()? {
             debug!("Image ready to download");
@@ -57,7 +67,7 @@ impl ExposureController {
         }
 
         if !self.exposure_active() && self.camera_params.loop_enabled {
-            if self.trigger_active || !self.camera_params.trigger_required  {
+            if self.trigger_active || !self.camera_params.trigger_required {
                 self.start_exposure(device)?;
             }
         }
@@ -72,7 +82,7 @@ impl ExposureController {
     pub fn exposure_command(
         &mut self,
         device: &mut dyn ImagerDevice,
-        command: ExposureCommand
+        command: ExposureCommand,
     ) -> Result<(), String> {
         Ok(match command {
             ExposureCommand::Start => self.start_exposure(device)?,
@@ -96,14 +106,18 @@ impl ExposureController {
         let size = self.camera_params.render_size;
         let message = StorageMessage::ProcessImage(image.clone());
         log_err("Self process message", self.storage_tx.send(message));
-        let message = ProcessMessage::ConvertRawImage(ConvertRawImage{image, size, rendering});
+        let message = ProcessMessage::ConvertRawImage(ConvertRawImage {
+            image,
+            size,
+            rendering,
+        });
         log_err("Self process message", self.process_tx.send(message));
     }
 
     fn start_exposure(&mut self, device: &mut dyn ImagerDevice) -> Result<(), String> {
         debug!("Starting exposure");
         if self.current_exposure.is_some() {
-            return Err(format!("Exposure already in progress."))
+            return Err(format!("Exposure already in progress."));
         }
 
         let params = self.make_exposure_description();
@@ -147,7 +161,7 @@ impl ExposureController {
                 x: x,
                 y: y,
                 width: w,
-                height: h
+                height: h,
             },
             autoexp: self.camera_params.autoexp,
             flipx: self.camera_params.flipx,
@@ -156,6 +170,6 @@ impl ExposureController {
             pixel_tol: self.camera_params.pixel_tol,
             percentile_pix: self.camera_params.percentile_pix,
             save: self.save_active,
-        }        
+        }
     }
 }

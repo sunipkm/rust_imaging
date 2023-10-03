@@ -43,7 +43,7 @@ fn scale_with_lookup_table(image: &RawImage, table: &LookupTable) -> ImgBuf<u16>
     for line in 0..size.y {
         let dst = result.line_mut(line);
         let input_line = &table.y[line];
-        let src = &image.data[input_line*w .. (input_line + 1)*w];
+        let src = &image.data.get_data()[input_line*w .. (input_line + 1)*w];
 
         for x in 0..size.x {
             dst[x] = src[table.x[x]];

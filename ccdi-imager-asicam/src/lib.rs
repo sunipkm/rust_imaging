@@ -12,8 +12,7 @@ use ccdi_imager_interface::{
 
 use log::info;
 
-use cameraunit::{CameraInfo, CameraUnit, ROI, ImageData};
-use cameraunit_asi::{get_camera_ids, open_camera, CameraUnitASI};
+use cameraunit_asi::{get_camera_ids, open_camera, CameraUnitASI, CameraInfo, CameraUnit, ROI, ImageData, SerialImageData};
 
 pub struct ASICameraDriver {}
 
@@ -129,7 +128,7 @@ impl ImagerDevice for ASICameraImager {
         self.device.image_ready().map_err(|x| x.to_string())
     }
 
-    fn download_image(&mut self, params: &mut ExposureParams) -> Result<Vec<u16>, String> {
+    fn download_image(&mut self, params: &mut ExposureParams) -> Result<SerialImageData<u16>, String> {
         let mut img = self.device.download_image().map_err(|x| x.to_string())?;
         if params.autoexp {
             if let Ok((exposure, _)) = img.find_optimum_exposure(
@@ -159,26 +158,13 @@ impl ImagerDevice for ASICameraImager {
             }
             img = ImageData::new(bimg.clone(), img.get_metadata().clone());
         }
-        let roi = self.device.get_roi();
-        let width = roi.x_max - roi.x_min;
-        let height = roi.y_max - roi.y_min;
-        params.area.x = roi.x_min as usize;
-        params.area.y = roi.y_min as usize;
-        params.area.width = width as usize;
-        params.area.height = height as usize;
-        if let Some(img) = img.get_image().as_luma16() {
-            let val = img.clone().into_vec();
-            if val.len() != params.area.height * params.area.width {
-                return Err(format!(
-                    "Length of image: {}, Requested size: {} x {}",
-                    val.len(),
-                    width,
-                    height
-                ));
-            }
-            return Ok(val);
-        }
-        Err("Could not get 16-bit image".to_string())
+
+        params.area.x = img.get_metadata().img_left as usize;
+        params.area.y = img.get_metadata().img_top as usize;
+        params.area.width = img.get_image().width() as usize;
+        params.area.height = img.get_image().height() as usize;
+
+        Ok(img.try_into()?)
     }
 
     fn set_temperature(&mut self, request: TemperatureRequest) -> Result<(), String> {
