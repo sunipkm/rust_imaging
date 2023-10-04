@@ -1,7 +1,6 @@
 use nanocv::{ImgSize, ImgBuf, ImgMut};
 
 use crate::{RawImage, RgbImage, RenderingType};
-use serialimage::{DynamicImage, SerialImageBuffer};
 
 use super::{lookup::{Offset, LookupTable, scale_lookup_table}, grid::draw_thirds_grid};
 

@@ -27,6 +27,7 @@ use crate::selectors::bool::BoolSelector;
 use crate::selectors::float::FloatSelector;
 use crate::selectors::shooting::ShootingDetail;
 use crate::selectors::usize::UsizeInput;
+use crate::selectors::floatin::FloatInput;
 
 // ============================================ PUBLIC =============================================
 
@@ -58,6 +59,7 @@ pub struct Main {
     pub y: Arc<Mutex<usize>>,
     pub w: Arc<Mutex<usize>>,
     pub h: Arc<Mutex<usize>>,
+    pub time: Arc<Mutex<f64>>,
 }
 
 impl Main {
@@ -146,6 +148,9 @@ impl Main {
         let y_ = self.y.clone();
         let w_ = self.w.clone();
         let h_ = self.h.clone();
+        
+        let t = self.time.clone();
+        let t_ = self.time.clone();
 
         let xp = self.x.clone();
         let yp = self.y.clone();
@@ -161,6 +166,10 @@ impl Main {
             );
             *FIRST_CALL.clone().lock().unwrap() = true;
             Msg::ParamUpdate(CameraParamMessage::SetRoi(value))
+        });
+
+        let time_changed_btn = ctx.link().callback(move |_| {
+            Msg::ParamUpdate(CameraParamMessage::SetTime(*t.lock().unwrap() as f64))
         });
 
         let roi = self
@@ -270,19 +279,28 @@ impl Main {
 
                     <button onclick={roi_changed}>{"Update ROI"}</button>
                     <button onclick={refresh_roi}>{"Refresh ROI"}</button>
-                </div>
-                <FloatSelector
+                    </div>
+                    <FloatSelector
                     name="Set camera gain"
                     config={self.view_state.config.gain.clone()}
                     selected_value={self.view_state.camera_params.gain as f64}
                     value_changed={gain_changed}
-                />
-                <FloatSelector
+                    />
+                    <FloatSelector
                     name="Set camera exposure time"
                     config={self.view_state.config.exposure.clone()}
                     selected_value={self.view_state.camera_params.time}
                     value_changed={time_changed}
-                />
+                    />
+                    <p>
+                    {"Exposure Time: "}
+                    <FloatInput
+                    value={*self.time.lock().unwrap()}
+                    width={10 as usize}
+                    on_change={move |value| {*t_.lock().unwrap() = value}}
+                    />
+                    </p>
+                <button onclick={time_changed_btn}>{"Update Exposure"}</button>
                 <RenderingSelector
                     rendering_changed={rendering_changed}
                     selected_value={self.view_state.camera_params.rendering}
@@ -388,6 +406,7 @@ impl Component for Main {
         static Y: Lazy<Arc<Mutex<usize>>> = Lazy::new(|| Arc::new(Mutex::new(0)));
         static W: Lazy<Arc<Mutex<usize>>> = Lazy::new(|| Arc::new(Mutex::new(0)));
         static H: Lazy<Arc<Mutex<usize>>> = Lazy::new(|| Arc::new(Mutex::new(0)));
+        static T: Lazy<Arc<Mutex<f64>>> = Lazy::new(|| Arc::new(Mutex::new(0.0)));
 
         Self {
             image: None,
@@ -399,6 +418,7 @@ impl Component for Main {
             y: Y.clone(),
             w: W.clone(),
             h: H.clone(),
+            time: T.clone(),
         }
     }
 

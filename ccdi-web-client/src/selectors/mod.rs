@@ -8,3 +8,4 @@ pub mod shooting;
 pub mod float;
 pub mod bool;
 pub mod usize;
+pub mod floatin;
