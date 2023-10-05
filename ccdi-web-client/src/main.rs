@@ -59,7 +59,7 @@ pub struct Main {
     pub y: Arc<Mutex<usize>>,
     pub w: Arc<Mutex<usize>>,
     pub h: Arc<Mutex<usize>>,
-    pub time: Arc<Mutex<f64>>,
+    pub time: Arc<Mutex<String>>,
 }
 
 impl Main {
@@ -168,8 +168,26 @@ impl Main {
             Msg::ParamUpdate(CameraParamMessage::SetRoi(value))
         });
 
+        let exposure = self
+            .view_state
+            .camera_properties
+            .clone()
+            .map(|prop| prop.basic.exposure)
+            .unwrap_or(0 as f32);
+
         let time_changed_btn = ctx.link().callback(move |_| {
-            Msg::ParamUpdate(CameraParamMessage::SetTime(*t.lock().unwrap() as f64))
+            let mut val = t.lock().unwrap();
+            let value = val.parse::<f64>();
+            if let Ok(value) = value {
+                if value < 0.0 || value > 3600.0 {
+                    *val = format!("{:.6}", exposure);
+                    return Msg::ParamUpdate(CameraParamMessage::SetTime(exposure as f64));
+                }
+                Msg::ParamUpdate(CameraParamMessage::SetTime(value))
+            } else {
+                *val = "0.001".to_string();
+                Msg::ParamUpdate(CameraParamMessage::SetTime(0.001))
+            }
         });
 
         let roi = self
@@ -190,13 +208,6 @@ impl Main {
             *wp.lock().unwrap() = roi.width;
             *hp.lock().unwrap() = roi.height;
         };
-
-        let exposure = self
-            .view_state
-            .camera_properties
-            .clone()
-            .map(|prop| prop.basic.exposure)
-            .unwrap_or(0 as f32);
 
         let exposure_str = {
             if exposure < 0.001 {
@@ -295,10 +306,10 @@ impl Main {
                     <p>
                     {"Exposure Time: "}
                     <FloatInput
-                    value={format!("{:.6}", *t_.lock().unwrap())}
+                    value={(*t_.lock().unwrap()).clone()}
                     width = 10
                     on_change={move |value: String| {
-                        *t_.lock().unwrap() = value.parse::<f64>().unwrap_or(0.0);
+                        *t_.lock().unwrap() = value;
                     }}
                     />
                     </p>
@@ -408,7 +419,7 @@ impl Component for Main {
         static Y: Lazy<Arc<Mutex<usize>>> = Lazy::new(|| Arc::new(Mutex::new(0)));
         static W: Lazy<Arc<Mutex<usize>>> = Lazy::new(|| Arc::new(Mutex::new(0)));
         static H: Lazy<Arc<Mutex<usize>>> = Lazy::new(|| Arc::new(Mutex::new(0)));
-        static T: Lazy<Arc<Mutex<f64>>> = Lazy::new(|| Arc::new(Mutex::new(0.0)));
+        static T: Lazy<Arc<Mutex<String>>> = Lazy::new(|| Arc::new(Mutex::new("0".to_string())));
 
         Self {
             image: None,
