@@ -295,9 +295,11 @@ impl Main {
                     <p>
                     {"Exposure Time: "}
                     <FloatInput
-                    value={*self.time.lock().unwrap()}
-                    width={10 as usize}
-                    on_change={move |value| {*t_.lock().unwrap() = value}}
+                    value={format!("{:.6}", *t_.lock().unwrap())}
+                    width = 10
+                    on_change={move |value: String| {
+                        *t_.lock().unwrap() = value.parse::<f64>().unwrap_or(0.0);
+                    }}
                     />
                     </p>
                 <button onclick={time_changed_btn}>{"Update Exposure"}</button>
