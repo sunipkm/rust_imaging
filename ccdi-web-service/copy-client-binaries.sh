@@ -4,15 +4,15 @@ set -e
 CLIENT_DIR=../ccdi-web-client
 CLIENT_DIST=$CLIENT_DIR/dist
 DST_DIR=./src/static
-sh -c "cd $CLIENT_DIR; cargo build --release"
+sh -c "cd $CLIENT_DIR; trunk build --release"
 
 WASM_FILE_SRC=$CLIENT_DIST/`ls -1 $CLIENT_DIST | grep ccdi-web-client | grep wasm`
 JS_FILE_SRC=$CLIENT_DIST/`ls -1 $CLIENT_DIST | grep ccdi-web-client | grep js`
 CSS_FILE_SRC=$CLIENT_DIST/`ls -1 $CLIENT_DIST | grep css`
 
-WASM_FILE_DST=$DST_DIR/ccdi-web-client.wasm
+WASM_FILE_DST=$DST_DIR/ccdi-web-client_bg.wasm
 JS_FILE_DST=$DST_DIR/ccdi-web-client.js
-CSS_FILE_DST=$DST_DIR/ccdi-web-client.css
+CSS_FILE_DST=$DST_DIR/index.css
 
 set +e
 rm $WASM_FILE_DST
