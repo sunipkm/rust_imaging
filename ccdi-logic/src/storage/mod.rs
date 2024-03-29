@@ -85,7 +85,7 @@ impl Storage {
     }
 
     fn current_dir(&self) -> Option<String> {
-        PathBuf::from(self.config.storage.clone())
+        PathBuf::from(&self.config.storage)
             .join(PathBuf::from(self.storage_name.clone()))
             .to_str()
             .map(|path| path.to_owned())

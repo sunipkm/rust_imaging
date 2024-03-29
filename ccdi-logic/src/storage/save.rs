@@ -6,8 +6,9 @@ use cameraunit::ImageData;
 // ============================================ PUBLIC =============================================
 
 pub fn save_fits_file(image: &RawImage, file_name: &str) -> Result<(), String> {
-    let path = PathBuf::from(file_name.clone());
+    let path = PathBuf::from(file_name);
     let prefix = path.parent().ok_or(format!("Invalid path parent"))?;
+    println!("Prefix: {:?}", prefix);
     std::fs::create_dir_all(prefix).map_err(to_string)?;
 
     let img = ImageData::from(image.data.clone());
