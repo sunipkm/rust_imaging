@@ -12,6 +12,8 @@ serde_derive = "1"
 serde_yaml = "0.9.22"
 fitsio = "0.21.2"
 cameraunit = "3.1.1"
+simple-expand-tilde = "0.1.4"
+
 
 nanocv = { git = "https://github.com/viktorchvatal/nanocv.git" }
 
