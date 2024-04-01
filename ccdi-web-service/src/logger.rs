@@ -1,6 +1,6 @@
 use std::fs::File;
 
-use simplelog::{Config, SimpleLogger, CombinedLogger, LevelFilter, SharedLogger, WriteLogger};
+use simplelog::{CombinedLogger, Config, LevelFilter, SharedLogger, SimpleLogger, WriteLogger};
 
 // ============================================ PUBLIC =============================================
 
@@ -10,9 +10,8 @@ pub fn init_logger(debug: bool, log_file: Option<&String>) {
         false => LevelFilter::Info,
     };
 
-    let mut loggers: Vec<Box<dyn SharedLogger>> = vec![
-        SimpleLogger::new(log_level, Config::default())
-    ];
+    let mut loggers: Vec<Box<dyn SharedLogger>> =
+        vec![SimpleLogger::new(log_level, Config::default())];
 
     if let Some(file) = log_file {
         if let Ok(created_file) = File::create(file) {

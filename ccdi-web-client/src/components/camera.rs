@@ -54,7 +54,7 @@ fn render_basic_rows(properties: &BasicProperties) -> Html {
 }
 
 fn render_other_rows(properties: &ImagerProperties) -> Html {
-    properties.other.iter().map(|property| render_item(property)).collect::<Html>()
+    properties.other.iter().map(render_item).collect::<Html>()
 }
 
 fn render_item(property: &DeviceProperty) -> Html {

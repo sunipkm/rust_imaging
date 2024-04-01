@@ -34,7 +34,7 @@ impl Component for ShootingDetails {
 // =========================================== PRIVATE =============================================
 
 fn render_detail_rows(properties: &StorageDetail) -> Html {
-    properties.storage_log.iter().map(|property| render_item(property)).collect::<Html>()
+    properties.storage_log.iter().map(render_item).collect::<Html>()
 }
 
 fn render_item(property: &StorageLogRecord) -> Html {

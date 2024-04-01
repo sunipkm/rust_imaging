@@ -13,8 +13,15 @@ use image::{DynamicImage, ImageBuffer};
 pub struct DemoImagerDriver {}
 
 impl DemoImagerDriver {
+    /// Creates a new [`DemoImagerDriver`].
     pub fn new() -> Self {
         Self {}
+    }
+}
+
+impl Default for DemoImagerDriver {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -59,7 +66,7 @@ impl ImagerDevice for DemoImagerDevice {
                     height: 4000,
                 },
             },
-            other: list_demo_properties(&self),
+            other: list_demo_properties(self),
         })
     }
 

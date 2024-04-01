@@ -1,34 +1,34 @@
-mod websocket;
 mod bridge;
 mod config;
-mod static_files;
 mod logger;
+mod static_files;
+mod websocket;
 
 use ccdi_common::ClientMessage;
 use ccdi_common::IoMessage;
 use ccdi_common::ProcessMessage;
 use ccdi_common::StateMessage;
 use ccdi_common::StorageMessage;
-use ccdi_logic::LogicParams;
 use ccdi_logic::create_default_config_file;
 use ccdi_logic::load_config_file;
 use ccdi_logic::start_io_thread;
 use ccdi_logic::start_logic_thread;
 use ccdi_logic::start_process_thread;
 use ccdi_logic::start_storage_thread;
+use ccdi_logic::LogicParams;
 use config::ServiceConfig;
 use log::debug;
+use log::{error, info};
 use logger::init_logger;
 use static_files::static_files_rules;
 use tokio::sync::mpsc;
-use log::{error, info};
 
+use bridge::start_std_to_tokio_channel_bridge;
+use bridge::start_tokio_to_std_channel_bridge;
 use warp::Filter;
 use websocket::create_clients;
 use websocket::create_websocket_service;
 use websocket::start_single_async_to_multiple_clients_sender;
-use bridge::start_tokio_to_std_channel_bridge;
-use bridge::start_std_to_tokio_channel_bridge;
 
 // ============================================ PUBLIC =============================================
 
@@ -69,7 +69,13 @@ fn main() {
     let _io_thread = start_io_thread(config.clone(), io_rx, server_tx.clone());
 
     let _server_thread = start_logic_thread(
-        params, config.clone(), server_rx, clients_tx, io_tx, process_tx, storage_tx,
+        params,
+        config.clone(),
+        server_rx,
+        clients_tx,
+        io_tx,
+        process_tx,
+        storage_tx,
     );
 
     tokio::runtime::Builder::new_multi_thread()
@@ -95,10 +101,7 @@ async fn tokio_main(
 
     let websocket_service = create_websocket_service("ccdi", clients);
 
-    let routes = warp::get().and(
-        websocket_service.or(static_files_rules())
-    );
+    let routes = warp::get().and(websocket_service.or(static_files_rules()));
 
-    warp::serve(routes)
-        .run(([0, 0, 0, 0], 8081)).await;
+    warp::serve(routes).run(([0, 0, 0, 0], 8081)).await;
 }

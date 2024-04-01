@@ -5,11 +5,11 @@ use ccdi_common::{log_err, append_to_file};
 // ============================================ PUBLIC =============================================
 
 fn main() {
-    let path = match args().skip(1).next() {
+    let path = match args().nth(1) {
         Some(path) => path,
         None => {
             return;
-             println!("Go argument passed, exiting.");
+            //  println!("Go argument passed, exiting.");
        }
     };
 

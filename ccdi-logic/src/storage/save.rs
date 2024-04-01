@@ -9,10 +9,10 @@ use simple_expand_tilde::*;
 
 pub fn save_fits_file(image: &RawImage, file_name: &str) -> Result<(), String> {
     let path = PathBuf::from(file_name);
-    let prefix = path.parent().ok_or(format!("Invalid path parent"))?;
+    let prefix = path.parent().ok_or("Invalid path parent".to_string())?;
     println!("Prefix: {:?}", prefix);
     let prefix = if prefix.starts_with("~") {
-        expand_tilde(&prefix).ok_or(format!("Could not un-tilde"))?
+        expand_tilde(prefix).ok_or("Could not un-tilde".to_string())?
     } else {
         prefix.to_owned()
     };

@@ -14,18 +14,17 @@ pub struct BackendState {
 
 impl BackendState {
     pub fn new(
-        _demo_mode: bool,
+        demo_mode: bool,
         process_tx: Sender<ProcessMessage>,
         storage_tx: Sender<StorageMessage>,
         config: Arc<ServiceConfig>,
     ) -> Self {
         Self {
             camera: CameraController::new(
-                // match demo_mode {
-                //     false => Box::new(ccdi_imager_moravian::MoravianImagerDriver::new()),
-                //     true => Box::new(ccdi_imager_demo::DemoImagerDriver::new()),
-                // },
-                Box::new(ccdi_imager_asicam::ASICameraDriver::new()),
+                match demo_mode {
+                    false => Box::new(ccdi_imager_asicam::ASICameraDriver::new()),
+                    true => Box::new(ccdi_imager_demo::DemoImagerDriver::new()),
+                },
                 process_tx,
                 storage_tx,
                 config
@@ -54,7 +53,7 @@ impl BackendState {
                 match heating {
                     None => self.return_view(),
                     Some(heating) => BackendResult {
-                        client_messages: vec![ClientMessage::View(self.camera.get_view())],
+                        client_messages: vec![ClientMessage::View(Box::new(self.camera.get_view()))],
                         storage_messages: vec![],
                         io_messages: vec![IoMessage::SetHeating(heating as f32)],
                     }
@@ -65,7 +64,7 @@ impl BackendState {
                 self.return_view()
             },
             ClientConnected => {
-                let view_msg = ClientMessage::View(self.camera.get_view());
+                let view_msg = ClientMessage::View(Box::new(self.camera.get_view()));
 
                 BackendResult::client(
                     match self.image.as_ref() {
@@ -149,7 +148,7 @@ impl BackendResult {
 impl BackendState {
     fn return_view(&self) -> BackendResult {
         BackendResult {
-            client_messages: vec![ClientMessage::View(self.camera.get_view())],
+            client_messages: vec![ClientMessage::View(Box::new(self.camera.get_view()))],
             storage_messages: Vec::new(),
             io_messages: Vec::new(),
         }

@@ -87,7 +87,7 @@ fn compute_histogram(channel: &dyn Img<u16>, size: usize, stats: ChannelStats) -
 
     for line in 0..channel.height() {
         for pixel in channel.line_ref(line) {
-            if let Some(bin) = bins.get_mut((pixel - stats.min) as usize * size as usize / divisor)
+            if let Some(bin) = bins.get_mut((pixel - stats.min) as usize * size / divisor)
             {
                 *bin += 1;
             }

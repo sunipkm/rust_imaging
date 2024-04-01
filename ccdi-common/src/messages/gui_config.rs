@@ -1,5 +1,4 @@
 use serde_derive::{Serialize, Deserialize};
-use serde::Serializer;
 
 // ============================================ PUBLIC =============================================
 
@@ -31,29 +30,29 @@ pub struct ButtonSet<T> {
     pub buttons: Vec<Vec<Button<T>>>
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Button<T> {
     pub text: String,
     pub value: T,
 }
 
-impl<T: serde::Serialize> serde::Serialize for Button<T> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer
-    {
-        let tuple = (&self.text, &self.value);
-        tuple.serialize(serializer)
-    }
-}
+// impl<T: serde::Serialize> serde::Serialize for Button<T> {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: Serializer
+//     {
+//         let tuple = (&self.text, &self.value);
+//         tuple.serialize(serializer)
+//     }
+// }
 
-impl<'de, T: serde::Deserialize<'de>> serde::Deserialize<'de> for Button<T> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where D: serde::Deserializer<'de> {
-        let tuple: (String, T) = serde::Deserialize::deserialize(deserializer)?;
-        Ok(Self { text: tuple.0, value: tuple.1 })
-    }
-}
+// impl<'de, T: serde::Deserialize<'de>> serde::Deserialize<'de> for Button<T> {
+//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+//     where D: serde::Deserializer<'de> {
+//         let tuple: (String, T) = serde::Deserialize::deserialize(deserializer)?;
+//         Ok(Self { text: tuple.0, value: tuple.1 })
+//     }
+// }
 
 // =========================================== PRIVATE =============================================
 

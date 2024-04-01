@@ -159,7 +159,7 @@ fn histogram_table(stats: Option<&ImageStats>, height: usize) -> Html {
 }
 
 fn histogram_image(stats: &ImageStats, height: usize) -> Html {
-    let payload = render_histogram_as_bmp(stats, height).map(|data| STANDARD.encode(&data));
+    let payload = render_histogram_as_bmp(stats, height).map(|data| STANDARD.encode(data));
 
     match payload {
         Err(error) => html! { <p>{"Histogram err:"} {error}</p> },
@@ -171,7 +171,7 @@ fn histogram_image(stats: &ImageStats, height: usize) -> Html {
 
 fn rgb_to_jpeg_base64(image: &RgbImage<u16>, transform: Transform) -> Option<String> {
     let encoded_jpeg = rgb_image_to_bmp(image, transform).ok()?;
-    let encoded_base64 = STANDARD.encode(&encoded_jpeg);
+    let encoded_base64 = STANDARD.encode(encoded_jpeg);
     Some(encoded_base64)
 }
 

@@ -25,7 +25,7 @@ pub fn pattern_pwm(value: f32) -> Vec<bool> {
     let pivot = (value*100.0) as usize;
 
     (0..100usize)
-        .map(|index| if index < pivot { true } else { false } )
+        .map(|index| index < pivot )
         .collect()
 }
 

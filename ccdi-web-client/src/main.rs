@@ -25,9 +25,9 @@ use selectors::rendering::RenderingSelector;
 use crate::components::system::System;
 use crate::selectors::bool::BoolSelector;
 use crate::selectors::float::FloatSelector;
+use crate::selectors::floatin::FloatInput;
 use crate::selectors::shooting::ShootingDetail;
 use crate::selectors::usize::UsizeInput;
-use crate::selectors::floatin::FloatInput;
 
 // ============================================ PUBLIC =============================================
 
@@ -66,7 +66,7 @@ impl Main {
     fn receive_message(&mut self, message: ClientMessage) -> bool {
         match message {
             ClientMessage::Reconnect => {} // handled elsewhere
-            ClientMessage::View(view) => self.view_state = view,
+            ClientMessage::View(view) => self.view_state = *view,
             ClientMessage::RgbImage(image) => self.image = Some(image),
         }
 
@@ -148,7 +148,7 @@ impl Main {
         let y_ = self.y.clone();
         let w_ = self.w.clone();
         let h_ = self.h.clone();
-        
+
         let t = self.time.clone();
         let t_ = self.time.clone();
 
@@ -165,6 +165,7 @@ impl Main {
                 *h_.clone().lock().unwrap(),
             );
             *FIRST_CALL.clone().lock().unwrap() = true;
+            let value = (value.0 as u16, value.1 as u16, value.2 as u16, value.3 as u16);
             Msg::ParamUpdate(CameraParamMessage::SetRoi(value))
         });
 
@@ -179,7 +180,7 @@ impl Main {
             let mut val = t.lock().unwrap();
             let value = val.parse::<f64>();
             if let Ok(value) = value {
-                if value < 0.0 || value > 3600.0 {
+                if !(0.0..=3600.0).contains(&value) {
                     *val = format!("{:.6}", exposure);
                     return Msg::ParamUpdate(CameraParamMessage::SetTime(exposure as f64));
                 }

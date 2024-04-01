@@ -80,7 +80,7 @@ impl CameraController {
 
         if self.view != Some(new_view.clone()) {
             self.view = Some(new_view.clone());
-            messages.push(ClientMessage::View(new_view))
+            messages.push(ClientMessage::View(Box::new(new_view)))
         }
 
         if let Some(ref mut camera) = self.connected {
@@ -202,10 +202,7 @@ impl CameraController {
             .map(|cam| cam.exposure_status())
             .unwrap_or(ConnectionState::Disconnected);
 
-        match exposure_status {
-            ConnectionState::Established => true,
-            _ => false,
-        }
+        matches!(exposure_status, ConnectionState::Established)
     }
 
     fn connection_state(&self) -> ConnectionState {

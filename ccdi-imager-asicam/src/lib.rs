@@ -25,6 +25,12 @@ impl ASICameraDriver {
     }
 }
 
+impl Default for ASICameraDriver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ImagerDriver for ASICameraDriver {
     fn list_devices(&mut self) -> Result<Vec<DeviceDescriptor>, String> {
         let ids = get_camera_ids();
@@ -37,7 +43,7 @@ impl ImagerDriver for ASICameraDriver {
                         name: id.1,
                     });
                 }
-                return Ok(out);
+                Ok(out)
             }
             None => Ok(Vec::<DeviceDescriptor>::new()),
         }
@@ -206,7 +212,7 @@ fn read_all_props(device: &CameraUnitASI) -> Vec<DeviceProperty> {
     vec![
         prop_f32(
             "Chip Temperature",
-            device.get_temperature().unwrap_or(-273.0) as f32,
+            device.get_temperature().unwrap_or(-273.0),
             1,
         ),
         prop("ADC Gain", device.get_gain_raw()),

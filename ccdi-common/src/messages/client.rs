@@ -14,7 +14,7 @@ use super::gui_config::GuiConfig;
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum ClientMessage {
     Reconnect,
-    View(ViewState),
+    View(Box<ViewState>),
     RgbImage(Arc<RgbImage<u16>>),
 }
 
@@ -24,7 +24,7 @@ pub struct RawImage {
     pub data: DynamicSerialImage
 }
 
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Default)]
 pub struct ViewState {
     pub detail: String,
     pub status: LogicStatus,
@@ -32,19 +32,6 @@ pub struct ViewState {
     pub camera_params: CameraParams,
     pub storage_detail: StorageDetail,
     pub config: GuiConfig,
-}
-
-impl Default for ViewState {
-    fn default() -> Self {
-        Self {
-            detail: String::new(),
-            status: Default::default(),
-            camera_properties: None,
-            camera_params: Default::default(),
-            storage_detail: Default::default(),
-            config: GuiConfig::default(),
-        }
-    }
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -61,10 +48,10 @@ pub struct CameraParams {
     pub percentile_pix: f32,
     pub pixel_tgt: f32,
     pub pixel_tol: f32,
-    pub x: usize,
-    pub y: usize,
-    pub w: usize,
-    pub h: usize,
+    pub x: u16,
+    pub y: u16,
+    pub w: u16,
+    pub h: u16,
     pub flipx: bool,
     pub flipy: bool,
 }
@@ -84,10 +71,10 @@ impl CameraParams {
             percentile_pix: 99.5,
             pixel_tgt: 40000./65535.,
             pixel_tol: 5000./65535.,
-            x: roi.x,
-            y: roi.y,
-            w: roi.width,
-            h: roi.height,
+            x: roi.x as u16,
+            y: roi.y as u16,
+            w: roi.width as u16,
+            h: roi.height as u16,
             flipx: false,
             flipy: false,
         }

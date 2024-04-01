@@ -83,7 +83,7 @@ impl IoManager {
 #[allow(unused)]
 fn read_input(path: &Path) -> Option<bool> {
     let first_char = read_text_file(path)
-        .map(|string| string.chars().nth(0).unwrap_or(' '));
+        .map(|string| string.chars().next().unwrap_or(' '));
 
     match first_char {
         Err(error) => {

@@ -57,7 +57,7 @@ fn save_buffer_as_bmp(buffer: &[u8], width: usize, height: usize) -> Result<Vec<
 
     if let Some(ref mut image) = dynamic.as_mut_rgb8() {
         for (_x, _y, pixel) in image.enumerate_pixels_mut() {
-            *pixel = image::Rgb([buffer[offset + 0], buffer[offset + 1], buffer[offset + 2]]);
+            *pixel = image::Rgb([buffer[offset], buffer[offset + 1], buffer[offset + 2]]);
             offset += 3;
         }
     }

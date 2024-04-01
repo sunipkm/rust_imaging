@@ -1,4 +1,4 @@
-use std::{path::PathBuf, sync::Arc};
+use std::{path::{Path, PathBuf}, sync::Arc};
 use ccdi_imager_interface::ExposureArea;
 use log::info;
 use nanocv::ImgSize;
@@ -56,7 +56,7 @@ pub fn load_config_file() -> Result<Arc<ServiceConfig>, String> {
 
     let res = serde_yaml::from_str::<ServiceConfig>(&read_text_file(path.as_path())?)
         .map_err(|err| format!("Could not load config file {}: {}", path_as_string(&path), err))
-        .map(|config| Arc::new(config))?;
+        .map(Arc::new)?;
 
     info!("Config ROI: ({}, {}) {} x {}", res.roi.x, res.roi.y, res.roi.width, res.roi.height);
 
@@ -77,7 +77,7 @@ pub fn create_default_config_file() -> Result<String, String> {
 
 // =========================================== PRIVATE =============================================
 
-fn path_as_string(path: &PathBuf) -> String {
+fn path_as_string(path: &Path) -> String {
     path.to_string_lossy().to_string()
 }
 

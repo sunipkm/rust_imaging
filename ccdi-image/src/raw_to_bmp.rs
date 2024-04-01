@@ -33,7 +33,7 @@ pub fn rgb_image_to_bmp(image: &RgbImage<u16>, transform: Transform) -> Result<V
             ]);
         }
     } else {
-        return Err(format!("Cannot convert to rgb 8 image"));
+        return Err("Cannot convert to rgb 8 image".to_string());
     }
 
     save_dynamic_image_to_jpeg(&mut dynamic)
@@ -53,17 +53,17 @@ fn save_dynamic_image_to_jpeg(image: &mut DynamicImage) -> Result<Vec<u8>, Strin
 fn to_8bit(transform: Transform, input: i32) -> u8 {
     match transform.function {
         TransformFunction::Linear => {
-            min(255, max(0, input - transform.sub)*transform.gain >> 8) as u8
+            min(255, (max(0, input - transform.sub)*transform.gain) >> 8) as u8
         },
         TransformFunction::Sqrt => {
             let input = (input - transform.sub) as f32;
             let root = (input.sqrt()*255.0) as i32;
-            min(255, max(0, root)*transform.gain >> 8) as u8
+            min(255, (max(0, root)*transform.gain) >> 8) as u8
         },
         TransformFunction::Log2 => {
             let input = (input - transform.sub) as f32;
             let root = (input.log2()*4096.0) as i32 - 15000;
-            min(255, max(0, root)*transform.gain >> 8) as u8
+            min(255, (max(0, root)*transform.gain) >> 8) as u8
         },
     }
 }

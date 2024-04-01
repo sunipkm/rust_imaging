@@ -12,12 +12,10 @@ pub fn static_files_rules() -> impl Filter<Extract = impl Reply, Error = Rejecti
     let js = warp::path("ccdi-web-client.js")
         .map(|| warp::reply::with_header(JS, "Content-Type", "text/javascript"));
 
-    let css = warp::path("index.css")
-        .map(|| warp::reply::with_header(CSS, "Content-Type", "text/css"));
+    let css =
+        warp::path("index.css").map(|| warp::reply::with_header(CSS, "Content-Type", "text/css"));
 
-    let static_files = wasm.or(js).or(css).or(index);
-
-    static_files
+    wasm.or(js).or(css).or(index)
 }
 
 // =========================================== PRIVATE =============================================

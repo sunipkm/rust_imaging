@@ -37,7 +37,7 @@ pub enum CameraParamMessage {
     SetPercentilePix(f32),
     SetPixelTgt(f32),
     SetPixelTol(f32),
-    SetRoi((usize, usize, usize, usize)),
+    SetRoi((u16, u16, u16, u16)),
     SetFlipX(bool),
     SetFlipY(bool),
 }

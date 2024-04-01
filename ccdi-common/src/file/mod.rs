@@ -20,7 +20,7 @@ pub fn append_to_file(
 pub fn save_text_file(
     data: &str, path: &Path
 ) -> Result<(), String> {
-    let prefix = path.parent().ok_or(format!("Invalid path parent"))?;
+    let prefix = path.parent().ok_or("Invalid path parent".to_string())?;
     std::fs::create_dir_all(prefix).map_err(to_string)?;
     let file = File::create(path).map_err(to_string)?;
     let mut writer = BufWriter::new(file);

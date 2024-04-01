@@ -51,7 +51,7 @@ impl ConnectedCameraController {
 
         self.properties
             .read_properties(self.device.as_mut())
-            .map_err(|_| format!("Periodic read properties failed"))
+            .map_err(|_| "Periodic read properties failed".to_string())
 
     }
 
