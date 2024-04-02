@@ -88,7 +88,7 @@ impl Component for Picture {
             }
         }
 
-        let hist_w = width;
+        let hist_w = width - 20;
         let hist_h = ctx.props().hist_height;
         let stats = ctx
             .props()
