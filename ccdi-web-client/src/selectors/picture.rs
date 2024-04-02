@@ -64,6 +64,9 @@ impl Component for Picture {
             sub: 500,
         };
 
+        let mut width: i32 = 0;
+        let mut height: i32 = 0;
+
         if let Some(window) = window() {
             if let Some(document) = window.document() {
                 if let Some(container) =
@@ -78,18 +81,20 @@ impl Component for Picture {
                             )
                             .into(),
                         );
+                        width = canvas.offset_width().into();
+                        height = canvas.offset_height().into();
                     }
                 }
             }
         }
 
-        let hist_w = ctx.props().hist_width;
+        let hist_w = width;
         let hist_h = ctx.props().hist_height;
         let stats = ctx
             .props()
             .image
             .as_deref()
-            .map(|img| compute_image_stats(img, hist_w));
+            .map(|img| compute_image_stats(img, hist_w as usize));
 
         html! {
             <div>
