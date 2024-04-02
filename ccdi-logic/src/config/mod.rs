@@ -1,4 +1,5 @@
-use std::{path::{Path, PathBuf}, sync::Arc};
+use std::{path::{Path, PathBuf}, sync::Arc, time::Duration};
+use cameraunit::OptimumExposureConfig;
 use ccdi_imager_interface::ExposureArea;
 use log::info;
 use nanocv::ImgSize;
@@ -15,8 +16,34 @@ pub struct ServiceConfig {
     pub turn_off_command: String,
     pub render_size: ImgSize,
     pub roi: ExposureArea,
+    pub exp: OptExposureConfig,
     pub gui: GuiConfig,
     pub io: IoConfig,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Default)]
+pub struct OptExposureConfig {
+    pub percentile_pix: f32,
+    pub pixel_tgt: f32,
+    pub pixel_tol: f32,
+    pub pixel_exclusion: u32,
+    pub min_exopsure: Duration,
+    pub max_exposure: Duration,
+    pub max_bin: u16,
+}
+
+impl OptExposureConfig {
+    pub fn get_optimum_exp_config(&self) -> Option<OptimumExposureConfig> {
+        OptimumExposureConfig::new(
+            self.percentile_pix,
+            self.pixel_tgt,
+            self.pixel_tol,
+            self.pixel_exclusion,
+            self.min_exopsure,
+            self.max_exposure,
+            self.max_bin,
+        )
+    }
 }
 
 impl Default for ServiceConfig {
@@ -25,6 +52,7 @@ impl Default for ServiceConfig {
             storage: String::from("~/storage/"),
             render_size: ImgSize::new(900, 600),
             roi: ExposureArea { x: 0, y: 0, width: 0, height: 0 },
+            exp: Default::default(),
             gui: Default::default(),
             io: Default::default(),
             turn_off_command: String::new(),

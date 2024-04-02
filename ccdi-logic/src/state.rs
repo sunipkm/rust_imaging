@@ -24,7 +24,11 @@ impl BackendState {
         Self {
             camera: CameraController::new(
                 match demo_mode {
-                    false => Box::new(ccdi_imager_asicam::ASICameraDriver::new()),
+                    false => {
+                        let mut drv = ccdi_imager_asicam::ASICameraDriver::new();
+                        drv.update_opt_config(config.exp.get_optimum_exp_config().unwrap());
+                        Box::new(drv)
+                    },
                     true => Box::new(ccdi_imager_demo::DemoImagerDriver::new()),
                 },
                 process_tx,

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use cameraunit::ImageData;
+use cameraunit::DynamicSerialImage;
 use ccdi_common::{to_string, RawImage};
 
 use simple_expand_tilde::*;
@@ -25,8 +25,8 @@ pub fn save_fits_file(image: &RawImage, file_name: &str) -> Result<(), String> {
     println!(
         "Saving to: {:?}", prefix
     );
-    let img = ImageData::from(image.data.clone());
-    img.save_fits(&prefix, "ccdi", "CCDI ASI", true, true)
+    let img = DynamicSerialImage::from(image.data.clone());
+    img.savefits(&prefix, "ccdi", Some("CCDI ASI"), true, true)
         .map_err(to_string)?;
 
     Ok(())

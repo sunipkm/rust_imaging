@@ -14,14 +14,20 @@ use log::info;
 
 use cameraunit_asi::{
     get_camera_ids, open_camera, CameraInfo, CameraUnit, CameraUnitASI, DynamicSerialImage,
-    ROI,
+    OptimumExposureConfig, ROI,
 };
 
-pub struct ASICameraDriver {}
+pub struct ASICameraDriver {
+    opt: Option<OptimumExposureConfig>,
+}
 
 impl ASICameraDriver {
     pub fn new() -> Self {
-        Self {}
+        Self {opt: None}
+    }
+
+    pub fn update_opt_config(&mut self, config: OptimumExposureConfig) {
+        self.opt = Some(config);
     }
 }
 
@@ -58,6 +64,7 @@ impl ImagerDriver for ASICameraDriver {
         Ok(Box::new(ASICameraImager {
             device: cam,
             roi: *roi_request,
+            opt: self.opt,
         }))
     }
 }
@@ -65,6 +72,7 @@ impl ImagerDriver for ASICameraDriver {
 pub struct ASICameraImager {
     device: CameraUnitASI,
     roi: ExposureArea,
+    opt: Option<OptimumExposureConfig>,
 }
 
 impl ImagerDevice for ASICameraImager {
@@ -105,28 +113,25 @@ impl ImagerDevice for ASICameraImager {
             let mut val = FIRST_CALL.lock().unwrap();
             if *val {
                 let roi = ROI {
-                    x_min: self.roi.x as i32,
-                    x_max: (self.roi.width + self.roi.x) as i32,
-                    y_min: self.roi.y as i32,
-                    y_max: (self.roi.height + self.roi.y) as i32,
+                    x_min: self.roi.x as u32,
+                    y_min: self.roi.y as u32,
+                    width: self.roi.width as u32,
+                    height: self.roi.height as u32,
                     bin_x: 1,
                     bin_y: 1,
                 };
                 info!(
                     "Firstcall ROI: ({}, {}), {} x {}",
-                    roi.x_min,
-                    roi.x_max,
-                    roi.x_max - roi.x_min,
-                    roi.y_max - roi.y_min
+                    roi.x_min, roi.y_min, roi.width, roi.height,
                 );
                 *val = false;
                 roi
             } else {
                 ROI {
-                    x_min: params.area.x as i32,
-                    x_max: (params.area.width + params.area.x) as i32,
-                    y_min: params.area.y as i32,
-                    y_max: (params.area.height + params.area.y) as i32,
+                    x_min: params.area.x as u32,
+                    y_min: params.area.y as u32,
+                    width: params.area.width as u32,
+                    height: params.area.height as u32,
                     bin_x: 1,
                     bin_y: 1,
                 }
@@ -147,17 +152,11 @@ impl ImagerDevice for ASICameraImager {
         params: &mut ExposureParams,
     ) -> Result<DynamicSerialImage, String> {
         let img = self.device.download_image().map_err(|x| x.to_string())?;
-        if params.autoexp {
-            if let Ok((exposure, _)) = img.find_optimum_exposure(
-                params.percentile_pix,
-                params.pixel_tgt,
-                params.pixel_tol,
-                self.device
-                    .get_min_exposure()
-                    .unwrap_or(Duration::from_millis(1)),
-                Duration::from_secs(60),
+        if params.autoexp & self.opt.is_some() {
+            if let Ok((exposure, _)) = self.opt.unwrap().find_optimum_exposure(
+                img.into_luma().into_vec(),
+                self.device.get_exposure(),
                 1,
-                100,
             ) {
                 self.device
                     .set_exposure(exposure)
@@ -175,11 +174,12 @@ impl ImagerDevice for ASICameraImager {
         //     }
         //     img = ImageData::new(bimg.clone(), img.get_metadata().clone());
         // }
-
-        params.area.x = img.get_metadata().img_left as usize;
-        params.area.y = img.get_metadata().img_top as usize;
-        params.area.width = img.get_image().width() as usize;
-        params.area.height = img.get_image().height() as usize;
+        if let Some(meta) = img.get_metadata() {
+            params.area.x = meta.img_left as usize;
+            params.area.y = meta.img_top as usize;
+            params.area.width = img.width();
+            params.area.height = img.height();
+        }
 
         Ok(img.into())
     }
@@ -202,8 +202,8 @@ fn read_basic_props(device: &CameraUnitASI) -> BasicProperties {
         roi: ExposureArea {
             x: roi.x_min as usize,
             y: roi.y_min as usize,
-            width: (roi.x_max - roi.x_min) as usize,
-            height: (roi.y_max - roi.y_min) as usize,
+            width: roi.width as usize,
+            height: roi.height as usize,
         },
     }
 }
