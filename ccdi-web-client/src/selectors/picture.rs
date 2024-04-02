@@ -8,7 +8,7 @@ use ccdi_image::{
 };
 
 use uuid::Uuid;
-use yew::Properties;
+use yew::{Callback, Properties};
 
 use wasm_bindgen::JsCast;
 
@@ -35,6 +35,7 @@ pub struct PictureData {
     pub image: Option<Arc<RgbImage<u16>>>,
     pub hist_width: usize,
     pub hist_height: usize,
+    pub onresize: Callback<(i32, i32)>,
 }
 
 impl Component for Picture {
@@ -83,6 +84,7 @@ impl Component for Picture {
                         );
                         width = canvas.offset_width().into();
                         height = canvas.offset_height().into();
+                        ctx.props().onresize.emit((width, height));
                     }
                 }
             }

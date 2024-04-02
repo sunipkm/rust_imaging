@@ -3,6 +3,7 @@ mod connection;
 mod selectors;
 
 use once_cell::sync::Lazy;
+use web_sys::console::log_1;
 use std::sync::{Arc, Mutex};
 
 use ccdi_common::*;
@@ -408,6 +409,7 @@ impl Main {
                     image={self.image.clone()}
                     hist_width={self.view_state.config.histogram_width}
                     hist_height={self.view_state.config.histogram_height}
+                    onresize={|val| (log_1(&format!("Callback: {:?}", val).into()))}
                 />
             },
         }
