@@ -405,12 +405,14 @@ impl Main {
                 <ShootingDetails storage_details={self.view_state.storage_detail.clone()} />
             },
             _ => html! {
+                <div onresize={|val| (log_1(&format!("Div Callback: {:?}", val).into()))}>
                 <Picture
                     image={self.image.clone()}
                     hist_width={self.view_state.config.histogram_width}
                     hist_height={self.view_state.config.histogram_height}
-                    onresize={|val| (log_1(&format!("Callback: {:?}", val).into()))}
+                    onresize={|_| ()}
                 />
+                </div>
             },
         }
     }
