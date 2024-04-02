@@ -1,10 +1,16 @@
-use std::{sync::Arc, process::Command, path::PathBuf, collections::VecDeque};
+use std::{
+    collections::VecDeque,
+    path::{Path, PathBuf},
+    process::Command,
+    sync::Arc,
+};
 
 use ccdi_common::{
-    StorageMessage, StateMessage, StorageState, StorageCapacity, to_string, StorageLogRecord,
-    RawImage, StorageLogStatus, StorageDetail
+    to_string, RawImage, StateMessage, StorageCapacity, StorageDetail, StorageLogRecord,
+    StorageLogStatus, StorageMessage, StorageState,
 };
-use log::debug;
+use log::{debug, info};
+use simple_expand_tilde::expand_tilde;
 
 use crate::ServiceConfig;
 
@@ -38,17 +44,18 @@ impl Storage {
     pub fn process(&mut self, message: StorageMessage) -> Result<Vec<StateMessage>, String> {
         match message {
             StorageMessage::SetDirectory(name) => {
+                //
                 self.storage_name = name;
                 self.counter = 0;
-            },
+            }
             StorageMessage::DisableStore => {
                 debug!("Storage disabled");
                 self.storage_active = false;
-            },
+            }
             StorageMessage::EnableStore => {
                 debug!("Storage enabled");
                 self.storage_active = true;
-            },
+            }
             StorageMessage::ProcessImage(image) => {
                 if self.storage_active {
                     self.handle_image(image);
@@ -60,14 +67,26 @@ impl Storage {
     }
 
     pub fn periodic_tasks(&mut self) -> Result<Vec<StateMessage>, String> {
-        let storage_state = check_storage(&self.config.storage);
+        // Need to construct absolute path before performing df command in check_storage.
+        if let Some(file_name) = self.current_dir() {
+            let path = PathBuf::from(file_name);
+            let prefix = path.parent().ok_or("Invalid path parent".to_string())?;
+            let prefix = if prefix.starts_with("~") {
+                expand_tilde(prefix).ok_or("Could not un-tilde".to_string())?
+            } else {
+                prefix.to_owned()
+            };
 
-        if storage_state == self.last_storage_state {
-            Ok(vec![])
-        } else {
+            std::fs::create_dir_all(&prefix).map_err(to_string)?;
+            let storage_state = check_storage(prefix.to_str().ok_or("Err")?);
+            // let storage_state = check_storage(&self.storage_name);
+            info!("Storage name: {:?}", self.storage_name);
+            info!("Prefix (abs path): {:?}", prefix);
             self.last_storage_state = storage_state.clone();
-            Ok(vec![StateMessage::UpdateStorageState(storage_state)])
-        }
+            return Ok(vec![StateMessage::UpdateStorageState(storage_state)]);
+        };
+
+        Ok(vec![])
     }
 }
 
@@ -84,6 +103,8 @@ impl Storage {
         }
     }
 
+    // This is where the directory prefix from the config file (i.e. ~/storage/) and the self.storage_name entered in the GUI (i.e. testdir) are concatenated.
+    // Any leading ~ is expanded only once within save_fits_file().
     fn current_dir(&self) -> Option<String> {
         PathBuf::from(&self.config.storage)
             .join(PathBuf::from(self.storage_name.clone()))
@@ -92,7 +113,8 @@ impl Storage {
     }
 
     fn current_file_name(&self) -> Option<String> {
-        self.current_dir().map(|dir| format!("{}/{:05}.fits", dir, self.counter))
+        self.current_dir()
+            .map(|dir| format!("{}/{:05}.fits", dir, self.counter))
     }
 
     fn handle_image(&mut self, image: Arc<RawImage>) {
@@ -102,9 +124,9 @@ impl Storage {
                 Ok(_) => ok_record(file_name),
                 Err(error) => StorageLogRecord {
                     name: file_name,
-                    status: StorageLogStatus::Error(error)
-                }
-            }
+                    status: StorageLogStatus::Error(error),
+                },
+            },
         };
 
         self.counter += 1;
@@ -117,17 +139,21 @@ impl Storage {
 }
 
 fn ok_record(name: String) -> StorageLogRecord {
-    StorageLogRecord { name, status: StorageLogStatus::Success }
+    StorageLogRecord {
+        name,
+        status: StorageLogStatus::Success,
+    }
 }
 
 fn file_name_err() -> StorageLogRecord {
     StorageLogRecord {
         name: String::from("Could not assemble file name"),
-        status: StorageLogStatus::Error(String::new())
+        status: StorageLogStatus::Error(String::new()),
     }
 }
 
 fn check_storage(path: &str) -> StorageState {
+    // Probable cause: path is not being prepended by the expanded "~/storage" from the config file. ~Mit
     match Command::new("df").args([path]).output() {
         Ok(output) => match output.status.code() {
             Some(0) => match String::from_utf8(output.stdout) {
@@ -135,35 +161,40 @@ fn check_storage(path: &str) -> StorageState {
                     Ok(details) => StorageState::Available(details),
                     Err(error) => StorageState::Error(error),
                 },
-                Err(error) => StorageState::Error(
-                    format!("Could not parse stdout as utf8: {:?}", error)
-                ),
+                Err(error) => {
+                    StorageState::Error(format!("Could not parse stdout as utf8: {:?}", error))
+                }
             },
-            Some(code) => StorageState::Error(
-                format!(
-                    "Storage check returned error code: {:?} {:?}",
-                    code, String::from_utf8_lossy(&output.stderr)
-                )
-            ),
-            status => StorageState::Error(
-                format!("Storage check did not return successfully: {:?}", status)
-            )
+            Some(code) => StorageState::Error(format!(
+                "Storage check returned error code: {:?} {:?}",
+                code,
+                String::from_utf8_lossy(&output.stderr)
+            )),
+            status => StorageState::Error(format!(
+                "Storage check did not return successfully: {:?}",
+                status
+            )),
         },
-        Err(error) => StorageState::Error(
-            format!("Storage check call failed: {:?}", error)
-        ),
+        Err(error) => StorageState::Error(format!("Storage check call failed: {:?}", error)),
     }
 }
 
 fn parse_free_space(stdout: &str) -> Result<StorageCapacity, String> {
-    let line = stdout.lines().nth(1).ok_or("df output second line missing")?;
+    let line = stdout
+        .lines()
+        .nth(1)
+        .ok_or("df output second line missing")?;
     let total_gigabytes = kb_to_gb(parse_nth_token(line, 1)?);
     let free_gigabytes = kb_to_gb(parse_nth_token(line, 3)?);
-    Ok(StorageCapacity{total_gigabytes, free_gigabytes})
+    Ok(StorageCapacity {
+        total_gigabytes,
+        free_gigabytes,
+    })
 }
 
 fn parse_nth_token(line: &str, index: usize) -> Result<f64, String> {
-    let token = line.split_whitespace()
+    let token = line
+        .split_whitespace()
         .nth(index)
         .ok_or(format!("{}th token not present in '{}'", index, line))?;
 
@@ -171,7 +202,7 @@ fn parse_nth_token(line: &str, index: usize) -> Result<f64, String> {
 }
 
 fn kb_to_gb(kilobytes: f64) -> f64 {
-    kilobytes/1024.0/1024.0
+    kilobytes / 1024.0 / 1024.0
 }
 
 // ============================================= TEST ==============================================
@@ -181,7 +212,7 @@ mod tests {
     use super::*;
     use indoc::indoc;
 
-    const TEST_DF_OUTPUT: &str = indoc!{"
+    const TEST_DF_OUTPUT: &str = indoc! {"
         Filesystem           1K-blocks  Used      Available  Use% Mounted on
         /dev/mapper/luks-a6e 1967861712 111750632 1756075448   6% /media/x/759
     "};
@@ -189,7 +220,7 @@ mod tests {
     #[test]
     fn parse_df_output() {
         let details = parse_free_space(TEST_DF_OUTPUT).expect("Parse details failed");
-        assert_eq!(details.total_gigabytes, 1967861712.0/1024.0/1024.0);
-        assert_eq!(details.free_gigabytes, 1756075448.0/1024.0/1024.0);
+        assert_eq!(details.total_gigabytes, 1967861712.0 / 1024.0 / 1024.0);
+        assert_eq!(details.free_gigabytes, 1756075448.0 / 1024.0 / 1024.0);
     }
 }
