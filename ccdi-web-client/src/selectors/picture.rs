@@ -103,10 +103,10 @@ impl Component for Picture {
                         <p>{"View"}</p>
                         <hr />
                         <p>{"Gain"}</p>
-                        { gain_button(ctx, self.gain, 1) }
-                        { gain_button(ctx, self.gain, 2) }
-                        { gain_button(ctx, self.gain, 4) }
-                        { gain_button(ctx, self.gain, 8) }
+                        { gain_button(ctx, self.gain,  1) }
+                        { gain_button(ctx, self.gain,  2) }
+                        { gain_button(ctx, self.gain,  4) }
+                        { gain_button(ctx, self.gain,  8) }
                         { gain_button(ctx, self.gain, 16) }
                         { gain_button(ctx, self.gain, 32) }
                         { gain_button(ctx, self.gain, 64) }
@@ -116,8 +116,8 @@ impl Component for Picture {
                         { function_button(ctx, self.function, TransformFunction::Log2, "Log2") }
                     </div>
                     <div class="image-content" id={format!("imagecanvas-{}", self.uuid)}>
-                        {rgb_image_to_html(ctx.props().image.as_deref(), transform)}
-                        {histogram_table(stats.as_ref(), hist_h)}
+                        {rgb_image_to_html(ctx.props().image.as_deref(), transform)} // TODO: Fix width and height
+                        {histogram_table(stats.as_ref(), hist_h)} // TODO: Fix width of histogram table
                     </div>
                 </div>
             </div>
