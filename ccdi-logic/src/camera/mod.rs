@@ -89,9 +89,11 @@ impl CameraController {
 
         let mut messages = vec![];
 
-        if self.view != Some(new_view.clone()) {
-            self.view = Some(new_view.clone());
-            messages.push(ClientMessage::View(Box::new(new_view)))
+        if let Some(sview) = self.view.as_ref()
+        {
+            if sview != &new_view {
+                messages.push(ClientMessage::View(Box::new(new_view)));
+            }
         }
 
         if let Some(ref mut camera) = self.connected {

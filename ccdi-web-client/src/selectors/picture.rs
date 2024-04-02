@@ -3,10 +3,17 @@ use std::sync::Arc;
 use base64::{engine::general_purpose::STANDARD, Engine};
 use ccdi_common::RgbImage;
 use ccdi_image::{
-    Transform, TransformFunction, rgb_image_to_bmp, compute_image_stats, ImageStats,
-    render_histogram_as_bmp
+    compute_image_stats, render_histogram_as_bmp, rgb_image_to_bmp, ImageStats, Transform,
+    TransformFunction,
 };
+
+use uuid::Uuid;
 use yew::Properties;
+
+use wasm_bindgen::JsCast;
+
+use web_sys::console::log_1;
+use web_sys::{window, HtmlElement};
 
 use super::*;
 
@@ -20,6 +27,7 @@ pub enum Msg {
 pub struct Picture {
     gain: i32,
     function: TransformFunction,
+    uuid: String,
 }
 
 #[derive(Clone, PartialEq, Properties)]
@@ -37,6 +45,7 @@ impl Component for Picture {
         Self {
             gain: 1,
             function: TransformFunction::Sqrt,
+            uuid: Uuid::new_v4().to_string(),
         }
     }
 
@@ -52,12 +61,35 @@ impl Component for Picture {
         let transform = Transform {
             gain: self.gain,
             function: self.function,
-            sub: 500
+            sub: 500,
         };
+
+        if let Some(window) = window() {
+            if let Some(document) = window.document() {
+                if let Some(container) =
+                    document.get_element_by_id(&format!("imagecanvas-{}", self.uuid))
+                {
+                    if let Ok(canvas) = container.dyn_into::<HtmlElement>() {
+                        log_1(
+                            &format!(
+                                "container: width: {} height: {}",
+                                canvas.offset_width(),
+                                canvas.offset_height()
+                            )
+                            .into(),
+                        );
+                    }
+                }
+            }
+        }
 
         let hist_w = ctx.props().hist_width;
         let hist_h = ctx.props().hist_height;
-        let stats = ctx.props().image.as_deref().map(|img| compute_image_stats(img, hist_w));
+        let stats = ctx
+            .props()
+            .image
+            .as_deref()
+            .map(|img| compute_image_stats(img, hist_w));
 
         html! {
             <div>
@@ -78,7 +110,7 @@ impl Component for Picture {
                         { function_button(ctx, self.function, TransformFunction::Sqrt, "Sqrt") }
                         { function_button(ctx, self.function, TransformFunction::Log2, "Log2") }
                     </div>
-                    <div class="image-content">
+                    <div class="image-content" id={format!("imagecanvas-{}", self.uuid)}>
                         {rgb_image_to_html(ctx.props().image.as_deref(), transform)}
                         {histogram_table(stats.as_ref(), hist_h)}
                     </div>
@@ -94,15 +126,15 @@ fn function_button(
     button_function: TransformFunction,
     text: &str,
 ) -> Html {
-    let function_click = |value: TransformFunction| ctx.link()
-        .callback(move |_| Msg::ChangeFunction(value));
+    let function_click =
+        |value: TransformFunction| ctx.link().callback(move |_| Msg::ChangeFunction(value));
 
     let selected_class = match current_function == button_function {
         true => Some("button-selected"),
         false => None,
     };
 
-    html!{
+    html! {
         <button
             class={classes!("short-button", selected_class)}
             onclick={function_click(button_function)}
@@ -118,7 +150,7 @@ fn gain_button(ctx: &Context<Picture>, current_gain: i32, button_gain: i32) -> H
         false => None,
     };
 
-    html!{
+    html! {
         <button
             class={classes!("short-button", selected_class)}
             onclick={gain_click(button_gain)}
@@ -130,10 +162,10 @@ fn gain_button(ctx: &Context<Picture>, current_gain: i32, button_gain: i32) -> H
 
 fn rgb_image_to_html(image: Option<&RgbImage<u16>>, transform: Transform) -> Html {
     match image.and_then(|image| rgb_to_jpeg_base64(image, transform)) {
-        None => html! { },
+        None => html! {},
         Some(ref base64) => html! {
             <img src={format!("data:image/bmp;base64,{}", base64)} />
-        }
+        },
     }
 }
 
@@ -154,7 +186,7 @@ fn histogram_table(stats: Option<&ImageStats>, height: usize) -> Html {
                     </div>
                 </div>
             </div>
-        }
+        },
     }
 }
 
@@ -165,7 +197,7 @@ fn histogram_image(stats: &ImageStats, height: usize) -> Html {
         Err(error) => html! { <p>{"Histogram err:"} {error}</p> },
         Ok(ref base64) => html! {
             <img class={"gray-border"} src={format!("data:image/bmp;base64,{}", base64)} />
-        }
+        },
     }
 }
 
@@ -176,7 +208,7 @@ fn rgb_to_jpeg_base64(image: &RgbImage<u16>, transform: Transform) -> Option<Str
 }
 
 fn limits(all: u16, r: u16, g: u16, b: u16) -> Html {
-    html!{
+    html! {
         <>
             <div>{all}</div>
             <hr/>
