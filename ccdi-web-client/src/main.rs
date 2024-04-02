@@ -52,7 +52,7 @@ struct RoundSize {
 }
 
 pub struct Main {
-    pub image: Option<Arc<RgbImage<u16>>>,
+    pub image: Option<Arc<RgbImage<u16>>>, // TODO: Change this to a smaller image type, e.g. DynamicSerialImage
     pub view_state: ViewState,
     pub connection_state: ConnectionState,
     pub connection_context: Option<Scope<ConnectionService>>,
@@ -405,14 +405,12 @@ impl Main {
                 <ShootingDetails storage_details={self.view_state.storage_detail.clone()} />
             },
             _ => html! {
-                <div onresize={|val| (log_1(&format!("Div Callback: {:?}", val).into()))}>
                 <Picture
                     image={self.image.clone()}
                     hist_width={self.view_state.config.histogram_width}
                     hist_height={self.view_state.config.histogram_height}
-                    onresize={|_| ()}
+                    onresize={|val| log_1(&format!("Resized: {:?}", val).into())} // TODO: Tap into this callback to do things, may be communicate to server to send a lower res image? Handle histogram on server to lower load/traffic? RgbImage must be changed: It is sending TOO MUCH data (3x for mono images)
                 />
-                </div>
             },
         }
     }
