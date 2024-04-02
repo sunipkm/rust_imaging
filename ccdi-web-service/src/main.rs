@@ -42,7 +42,7 @@ fn main() {
 
     match create_default_config_file() {
         Ok(path) => info!(
-            "Created default config in '{}'. Rename it to config.json to use it.",
+            "Created default config in '{}'. Rename it to config.yaml to use it.",
             path
         ),
         Err(error) => error!("Could not create default config file: {}", error),
