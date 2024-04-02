@@ -37,7 +37,8 @@ pub enum Msg {
     MessageReceived(ClientMessage),
     SendMessage(StateMessage),
     Action(UserAction),
-    ParamUpdate(CameraParamMessage),
+    CParamUpdate(CameraParamMessage),
+    IParamUpdate(ImageParamMessage),
 }
 
 pub enum UserAction {
@@ -93,27 +94,27 @@ impl Main {
 
         let gain_changed = ctx
             .link()
-            .callback(|gain: f64| Msg::ParamUpdate(CameraParamMessage::SetGain(gain as u16)));
+            .callback(|gain: f64| Msg::CParamUpdate(CameraParamMessage::SetGain(gain as u16)));
 
         let time_changed = ctx
             .link()
-            .callback(|time: f64| Msg::ParamUpdate(CameraParamMessage::SetTime(time)));
+            .callback(|time: f64| Msg::CParamUpdate(CameraParamMessage::SetTime(time)));
 
         let rendering_changed = ctx.link().callback(|value: RenderingType| {
-            Msg::ParamUpdate(CameraParamMessage::SetRenderingType(value))
+            Msg::IParamUpdate(ImageParamMessage::SetRenderingType(value))
         });
 
         let autoexp_changed = ctx
             .link()
-            .callback(|value: bool| Msg::ParamUpdate(CameraParamMessage::SetAutoExp(value)));
+            .callback(|value: bool| Msg::CParamUpdate(CameraParamMessage::SetAutoExp(value)));
 
         let flipx_changed = ctx
             .link()
-            .callback(|value: bool| Msg::ParamUpdate(CameraParamMessage::SetFlipX(value)));
+            .callback(|value: bool| Msg::IParamUpdate(ImageParamMessage::SetFlipX(value)));
 
         let flipy_changed = ctx
             .link()
-            .callback(|value: bool| Msg::ParamUpdate(CameraParamMessage::SetFlipY(value)));
+            .callback(|value: bool| Msg::IParamUpdate(ImageParamMessage::SetFlipY(value)));
 
         let x = self.x.clone();
         let y = self.y.clone();
@@ -166,7 +167,7 @@ impl Main {
             );
             *FIRST_CALL.clone().lock().unwrap() = true;
             let value = (value.0 as u16, value.1 as u16, value.2 as u16, value.3 as u16);
-            Msg::ParamUpdate(CameraParamMessage::SetRoi(value))
+            Msg::IParamUpdate(ImageParamMessage::SetRoi(value))
         });
 
         let exposure = self
@@ -182,12 +183,12 @@ impl Main {
             if let Ok(value) = value {
                 if !(0.0..=3600.0).contains(&value) {
                     *val = format!("{:.6}", exposure);
-                    return Msg::ParamUpdate(CameraParamMessage::SetTime(exposure as f64));
+                    return Msg::CParamUpdate(CameraParamMessage::SetTime(exposure as f64));
                 }
-                Msg::ParamUpdate(CameraParamMessage::SetTime(value))
+                Msg::CParamUpdate(CameraParamMessage::SetTime(value))
             } else {
                 *val = "0.001".to_string();
-                Msg::ParamUpdate(CameraParamMessage::SetTime(0.001))
+                Msg::CParamUpdate(CameraParamMessage::SetTime(0.001))
             }
         });
 
@@ -249,14 +250,14 @@ impl Main {
                         <div class="float-child">
                             <BoolSelector
                                 name = "Flip X"
-                                selected_value = {self.view_state.camera_params.flipx}
+                                selected_value = {self.view_state.image_params.flipx}
                                 value_changed = {flipx_changed}
                             />
                         </div>
                         <div class="float-child">
                             <BoolSelector
                                 name = "Flip Y"
-                                selected_value = {self.view_state.camera_params.flipy}
+                                selected_value = {self.view_state.image_params.flipy}
                                 value_changed = {flipy_changed}
                             />
                         </div>
@@ -317,10 +318,11 @@ impl Main {
                 <button onclick={time_changed_btn}>{"Update Exposure"}</button>
                 <RenderingSelector
                     rendering_changed={rendering_changed}
-                    selected_value={self.view_state.camera_params.rendering}
+                    selected_value={self.view_state.image_params.rendering}
                 />
                 <CompositionDetail
                     on_action={action}
+                    image_params={self.view_state.image_params.clone()}
                     camera_params={self.view_state.camera_params.clone()}
                 />
             </div>
@@ -330,11 +332,11 @@ impl Main {
     fn render_cooling(&self, ctx: &Context<Self>) -> Html {
         let cooling_changed = ctx
             .link()
-            .callback(|temp: f64| Msg::ParamUpdate(CameraParamMessage::SetTemp(temp)));
+            .callback(|temp: f64| Msg::CParamUpdate(CameraParamMessage::SetTemp(temp)));
 
         let heating_changed = ctx
             .link()
-            .callback(|temp: f64| Msg::ParamUpdate(CameraParamMessage::SetHeatingPwm(temp)));
+            .callback(|temp: f64| Msg::CParamUpdate(CameraParamMessage::SetHeatingPwm(temp)));
 
         html! {
             <div>
@@ -380,6 +382,7 @@ impl Main {
                 <CompositionDetail
                     on_action={action}
                     camera_params={self.view_state.camera_params.clone()}
+                    image_params={self.view_state.image_params.clone()}
                 />
             </div>
         }
@@ -453,7 +456,12 @@ impl Component for Main {
                 self.connection_state = state;
                 true
             }
-            Msg::ParamUpdate(message) => {
+            Msg::IParamUpdate(message) => {
+                ctx.link()
+                    .send_message(Msg::SendMessage(StateMessage::ImageParam(message)));
+                false
+            }
+            Msg::CParamUpdate(message) => {
                 ctx.link()
                     .send_message(Msg::SendMessage(StateMessage::CameraParam(message)));
                 false

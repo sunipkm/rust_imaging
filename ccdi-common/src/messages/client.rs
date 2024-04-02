@@ -29,22 +29,17 @@ pub struct ViewState {
     pub detail: String,
     pub status: LogicStatus,
     pub camera_properties: Option<Arc<ImagerProperties>>,
+    pub image_params: ImageParams,
     pub camera_params: CameraParams,
     pub storage_detail: StorageDetail,
     pub config: GuiConfig,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct CameraParams {
-    pub loop_enabled: bool,
-    pub gain: u16,
-    pub time: f64,
+pub struct ImageParams {
+    // pub loop_enabled: bool,
     pub rendering: RenderingType,
     pub render_size: ImgSize,
-    pub temperature: f64,
-    pub trigger_required: bool,
-    pub heating_pwm: f64,
-    pub autoexp: bool,
     pub percentile_pix: f32,
     pub pixel_tgt: f32,
     pub pixel_tol: f32,
@@ -56,18 +51,11 @@ pub struct CameraParams {
     pub flipy: bool,
 }
 
-impl CameraParams {
+impl ImageParams {
     pub fn new(render_size: ImgSize, roi: ExposureArea) -> Self {
         Self {
-            loop_enabled: false,
-            gain: 0,
-            time: 1.0,
             rendering: RenderingType::FullImage,
             render_size,
-            temperature: -10.0,
-            trigger_required: false,
-            heating_pwm: 0.0,
-            autoexp: true,
             percentile_pix: 99.5,
             pixel_tgt: 40000./65535.,
             pixel_tol: 5000./65535.,
@@ -81,9 +69,40 @@ impl CameraParams {
     }
 }
 
+impl Default for ImageParams {
+    fn default() -> Self {
+        ImageParams::new(ImgSize::new(900, 600), ExposureArea { x: 0, y: 0, width: 0, height: 0 })
+    }
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct CameraParams {
+    pub loop_enabled: bool,
+    pub gain: u16,
+    pub time: f64,
+    pub temperature: f64,
+    pub trigger_required: bool,
+    pub heating_pwm: f64,
+    pub autoexp: bool,
+}
+
+impl CameraParams {
+    pub fn new() -> Self {
+        Self {
+            loop_enabled: false,
+            gain: 0,
+            time: 1.0,
+            temperature: -10.0,
+            trigger_required: false,
+            heating_pwm: 0.0,
+            autoexp: true,
+        }
+    }
+}
+
 impl Default for CameraParams {
     fn default() -> Self {
-        CameraParams::new(ImgSize::new(900, 600), ExposureArea { x: 0, y: 0, width: 0, height: 0 })
+        CameraParams::new()
     }
 }
 

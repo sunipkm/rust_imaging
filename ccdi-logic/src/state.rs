@@ -1,6 +1,8 @@
-use std::sync::{Arc, mpsc::Sender};
+use std::sync::{mpsc::Sender, Arc};
 
-use ccdi_common::{ClientMessage, StateMessage, RgbImage, ProcessMessage, StorageMessage, IoMessage};
+use ccdi_common::{
+    ClientMessage, IoMessage, ProcessMessage, RgbImage, StateMessage, StorageMessage,
+};
 
 use crate::{camera::CameraController, ServiceConfig};
 
@@ -27,7 +29,7 @@ impl BackendState {
                 },
                 process_tx,
                 storage_tx,
-                config
+                config,
             ),
             image: None,
         }
@@ -41,11 +43,12 @@ impl BackendState {
             ImageDisplayed(image) => {
                 self.image = Some(image);
                 BackendResult::empty()
-            },
+            }
+            // TODO: ImageParam?
             CameraParam(message) => {
                 let heating = match message {
                     ccdi_common::CameraParamMessage::SetHeatingPwm(value) => Some(value),
-                    _ => None
+                    _ => None,
                 };
 
                 self.camera.update_camera_params(message);
@@ -53,51 +56,57 @@ impl BackendState {
                 match heating {
                     None => self.return_view(),
                     Some(heating) => BackendResult {
-                        client_messages: vec![ClientMessage::View(Box::new(self.camera.get_view()))],
+                        client_messages: vec![ClientMessage::View(Box::new(
+                            self.camera.get_view(),
+                        ))],
                         storage_messages: vec![],
                         io_messages: vec![IoMessage::SetHeating(heating as f32)],
-                    }
+                    },
                 }
-            },
+            }
+            ImageParam(message) => {
+                log::debug!("ImageParam message: {:?}", message);
+
+                self.camera.update_image_params(message);
+                // TODO: Do something with the exact type of image param message
+
+                BackendResult::empty()
+            }
             ExposureMessage(command) => {
                 self.camera.exposure_command(command);
                 self.return_view()
-            },
+            }
             ClientConnected => {
                 let view_msg = ClientMessage::View(Box::new(self.camera.get_view()));
 
-                BackendResult::client(
-                    match self.image.as_ref() {
-                        None => vec![view_msg],
-                        Some(image) => vec![view_msg, ClientMessage::RgbImage(image.clone())],
-                    }
-                )
+                BackendResult::client(match self.image.as_ref() {
+                    None => vec![view_msg],
+                    Some(image) => vec![view_msg, ClientMessage::RgbImage(image.clone())],
+                })
             }
             UpdateStorageState(storage_state) => {
                 self.camera.update_storage_status(storage_state);
                 self.return_view()
-            },
+            }
             TriggerValueChanged(value) => {
                 self.camera.update_trigger_status(value);
                 // Trigger might be switched on, perform idle tasks immediately
                 let (client, io) = self.camera.periodic();
                 BackendResult::client_io(client, io)
-            },
-            StorageMessage(message) => {
-                BackendResult {
-                    client_messages: Vec::new(),
-                    storage_messages: vec![message],
-                    io_messages: Vec::new(),
-                }
+            }
+            StorageMessage(message) => BackendResult {
+                client_messages: Vec::new(),
+                storage_messages: vec![message],
+                io_messages: Vec::new(),
             },
             UpdateStorageDetail(detail) => {
                 self.camera.update_storage_detail(detail);
                 self.return_view()
-            },
+            }
             PowerOff => {
                 self.camera.turn_off();
                 BackendResult::empty()
-            },
+            }
         })
     }
 
@@ -131,10 +140,7 @@ impl BackendResult {
         }
     }
 
-    pub fn client_io(
-        client: Vec<ClientMessage>,
-        io: Vec<IoMessage>,
-    ) -> Self {
+    pub fn client_io(client: Vec<ClientMessage>, io: Vec<IoMessage>) -> Self {
         Self {
             client_messages: client,
             io_messages: io,

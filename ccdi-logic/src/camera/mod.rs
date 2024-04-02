@@ -6,10 +6,11 @@ mod properties;
 use std::sync::{mpsc::Sender, Arc};
 
 use ccdi_common::{
-    CameraParamMessage, CameraParams, ClientMessage, ConnectionState, ExposureCommand, IoMessage,
-    LogicStatus, ProcessMessage, StorageDetail, StorageMessage, StorageState, ViewState,
+    CameraParamMessage, CameraParams, ClientMessage, ConnectionState, ExposureCommand,
+    ImageParamMessage, ImageParams, IoMessage, LogicStatus, ProcessMessage, StorageDetail,
+    StorageMessage, StorageState, ViewState,
 };
-use ccdi_imager_interface::{DeviceDescriptor, ImagerDriver, ExposureArea};
+use ccdi_imager_interface::{DeviceDescriptor, ExposureArea, ImagerDriver};
 use log::info;
 
 use crate::ServiceConfig;
@@ -24,6 +25,7 @@ pub struct CameraController {
     detail: String,
     connected: Option<ConnectedCameraController>,
     view: Option<ViewState>,
+    image_params: ImageParams,
     camera_params: CameraParams,
     process_tx: Sender<ProcessMessage>,
     storage_tx: Sender<StorageMessage>,
@@ -47,7 +49,16 @@ impl CameraController {
             connected: None,
             detail: String::from("Started"),
             view: None,
-            camera_params: CameraParams::new(config.render_size, ExposureArea {x: config.roi.x, y: config.roi.y, width: config.roi.width, height: config.roi.height}),
+            image_params: ImageParams::new(
+                config.render_size,
+                ExposureArea {
+                    x: config.roi.x,
+                    y: config.roi.y,
+                    width: config.roi.width,
+                    height: config.roi.height,
+                },
+            ),
+            camera_params: CameraParams::new(),
             process_tx,
             storage_tx,
             storage_status: StorageState::Unknown,
@@ -114,9 +125,33 @@ impl CameraController {
                 loop_enabled: into_state(self.camera_params.loop_enabled),
             },
             camera_properties: self.connected.as_ref().map(|cam| cam.get_properties()),
+            image_params: self.image_params.clone(),
             camera_params: self.camera_params.clone(),
             config: self.config.gui.clone(),
             storage_detail: self.storage_detail.clone(),
+        }
+    }
+
+    pub fn update_image_params(&mut self, message: ImageParamMessage) {
+        match message {
+            ImageParamMessage::SetRoi((x, y, w, h)) => {
+                info!("New ROI: X {} Y {}, {} x {}", x, y, w, h);
+                self.image_params.x = x;
+                self.image_params.y = y;
+                self.image_params.w = w;
+                self.image_params.h = h;
+            }
+            ImageParamMessage::SetFlipX(value) => self.image_params.flipx = value,
+            ImageParamMessage::SetFlipY(value) => self.image_params.flipy = value,
+            ImageParamMessage::SetPercentilePix(value) => self.image_params.percentile_pix = value,
+            ImageParamMessage::SetPixelTgt(value) => self.image_params.pixel_tgt = value,
+            ImageParamMessage::SetPixelTol(value) => self.image_params.pixel_tol = value,
+            ImageParamMessage::SetRenderingType(rendering) => {
+                self.image_params.rendering = rendering
+            }
+        }
+        if let Some(camera) = self.connected.as_mut() {
+            camera.update_image_params(self.image_params.clone());
         }
     }
 
@@ -129,24 +164,24 @@ impl CameraController {
             SetTemp(temp) => self.camera_params.temperature = temp,
             SetHeatingPwm(temp) => self.camera_params.heating_pwm = temp,
             SetTime(time) => self.camera_params.time = time,
-            SetRenderingType(rendering) => self.camera_params.rendering = rendering,
+            // SetRenderingType(rendering) => self.camera_params.rendering = rendering,
             SetTriggerRequired(value) => self.camera_params.trigger_required = value,
             SetAutoExp(value) => {
                 info!("Autoexposure: {}", value);
                 self.camera_params.autoexp = value;
-            },
-            SetFlipX(value) => self.camera_params.flipx = value,
-            SetFlipY(value) => self.camera_params.flipy = value,
-            SetPercentilePix(value) => self.camera_params.percentile_pix = value,
-            SetPixelTgt(value) => self.camera_params.pixel_tgt = value,
-            SetPixelTol(value) => self.camera_params.pixel_tol = value,
-            SetRoi((x, y, w, h)) => {
-                info!("New ROI: X {} Y {}, {} x {}", x, y, w, h);
-                self.camera_params.x = x;
-                self.camera_params.y = y;
-                self.camera_params.w = w;
-                self.camera_params.h = h;
             }
+            // SetFlipX(value) => self.camera_params.flipx = value,
+            // SetFlipY(value) => self.camera_params.flipy = value,
+            // SetPercentilePix(value) => self.camera_params.percentile_pix = value,
+            // SetPixelTgt(value) => self.camera_params.pixel_tgt = value,
+            // SetPixelTol(value) => self.camera_params.pixel_tol = value,
+            // SetRoi((x, y, w, h)) => {
+            //     info!("New ROI: X {} Y {}, {} x {}", x, y, w, h);
+            //     self.camera_params.x = x;
+            //     self.camera_params.y = y;
+            //     self.camera_params.w = w;
+            //     self.camera_params.h = h;
+            // }
         }
 
         if let Some(camera) = self.connected.as_mut() {

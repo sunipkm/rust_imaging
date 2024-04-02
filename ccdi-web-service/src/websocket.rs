@@ -137,7 +137,7 @@ fn convert_state_message(message: Message) -> Result<StateMessage, String> {
         let json_string = String::from_utf8(message.into_bytes()).map_err(to_string)?;
         serde_json::from_str::<StateMessage>(&json_string).map_err(to_string)
     } else {
-        Err(String::from("Msg is not text"))
+        Err(format!("Msg {:?} is not text", message))
     }
 }
 

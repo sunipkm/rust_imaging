@@ -9,6 +9,7 @@ use crate::{RgbImage, StorageState, StorageMessage, StorageDetail};
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum StateMessage {
     ExposureMessage(ExposureCommand),
+    ImageParam(ImageParamMessage),
     CameraParam(CameraParamMessage),
     ClientConnected,
     ImageDisplayed(Arc<RgbImage<u16>>),
@@ -25,21 +26,39 @@ pub enum ExposureCommand {
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum CameraParamMessage {
-    EnableLoop(bool),
-    SetGain(u16),
-    SetTime(f64),
-    SetTemp(f64),
-    SetHeatingPwm(f64),
+pub enum ImageParamMessage {
+    // SetGain(u16),
+    // SetTime(f64),
+    // SetTemp(f64),
+    // SetHeatingPwm(f64),
     SetRenderingType(RenderingType),
-    SetTriggerRequired(bool),
-    SetAutoExp(bool),
+    // SetTriggerRequired(bool),
+    // SetAutoExp(bool),
     SetPercentilePix(f32),
     SetPixelTgt(f32),
     SetPixelTol(f32),
     SetRoi((u16, u16, u16, u16)),
     SetFlipX(bool),
     SetFlipY(bool),
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub enum CameraParamMessage {
+    // EnableLoop(bool),
+    EnableLoop(bool),
+    SetGain(u16),
+    SetTime(f64),
+    SetTemp(f64),
+    SetHeatingPwm(f64),
+    // SetRenderingType(RenderingType),
+    SetTriggerRequired(bool),
+    SetAutoExp(bool),
+    // SetPercentilePix(f32),
+    // SetPixelTgt(f32),
+    // SetPixelTol(f32),
+    // SetRoi((u16, u16, u16, u16)),
+    // SetFlipX(bool),
+    // SetFlipY(bool),
 }
 
 #[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]

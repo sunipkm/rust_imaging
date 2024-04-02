@@ -1,7 +1,7 @@
 use std::sync::{Arc, mpsc::Sender};
 
 use ccdi_common::{
-    ExposureCommand, ClientMessage, ConnectionState, ProcessMessage, CameraParams, StorageMessage
+    ExposureCommand, ClientMessage, ConnectionState, ProcessMessage, ImageParams, CameraParams, StorageMessage
 };
 use ccdi_imager_interface::{ImagerDevice, ImagerProperties, TemperatureRequest};
 use nanocv::ImgSize;
@@ -59,8 +59,14 @@ impl ConnectedCameraController {
         self.properties.get_properties()
     }
 
+    // Probably don't need update_image_params here...?
+
     pub fn update_camera_params(&mut self, params: CameraParams) {
         self.exposure.update_camera_params(params);
+    }
+
+    pub fn update_image_params(&mut self, params: ImageParams) {
+        self.exposure.update_image_params(params);
     }
 
     pub fn exposure_command(&mut self, command: ExposureCommand) -> Result<(), String> {

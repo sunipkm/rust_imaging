@@ -4,7 +4,7 @@ use std::{
 };
 
 use ccdi_common::{
-    log_err, CameraParams, ClientMessage, ConvertRawImage, ExposureCommand, ProcessMessage,
+    log_err, ImageParams, CameraParams, ClientMessage, ConvertRawImage, ExposureCommand, ProcessMessage,
     RawImage, StorageMessage,
 };
 use ccdi_imager_interface::{BasicProperties, ExposureArea, ExposureParams, ImagerDevice};
@@ -15,6 +15,7 @@ use nanocv::ImgSize;
 
 pub struct ExposureController {
     properties: BasicProperties,
+    image_params: ImageParams,
     camera_params: CameraParams,
     current_exposure: Option<ExposureParams>,
     process_tx: Sender<ProcessMessage>,
@@ -32,7 +33,7 @@ impl ExposureController {
     ) -> Self {
         Self {
             properties,
-            camera_params: CameraParams::new(
+            image_params: ImageParams::new(
                 render_size,
                 ExposureArea {
                     x: 0,
@@ -41,6 +42,7 @@ impl ExposureController {
                     height: 0,
                 },
             ),
+            camera_params: CameraParams::new(),
             current_exposure: None,
             process_tx,
             storage_tx,
@@ -73,6 +75,10 @@ impl ExposureController {
         Ok(vec![])
     }
 
+    pub fn update_image_params(&mut self, params: ImageParams) {
+        self.image_params = params;
+    }
+
     pub fn update_camera_params(&mut self, params: CameraParams) {
         self.camera_params = params;
     }
@@ -101,8 +107,8 @@ impl ExposureController {
 
 impl ExposureController {
     fn call_process_message(&self, image: Arc<RawImage>) {
-        let rendering = self.camera_params.rendering;
-        let size = self.camera_params.render_size;
+        let rendering = self.image_params.rendering;
+        let size = self.image_params.render_size;
         let message = StorageMessage::ProcessImage(image.clone());
         log_err("Self process message", self.storage_tx.send(message));
         let message = ProcessMessage::ConvertRawImage(ConvertRawImage {
@@ -131,10 +137,10 @@ impl ExposureController {
     }
 
     fn make_exposure_description(&mut self) -> ExposureParams {
-        let mut x = self.camera_params.x.min((self.properties.width - 1) as u16) as usize;
-        let mut y = self.camera_params.y.min((self.properties.height - 1) as u16) as usize;
-        let mut w = self.camera_params.w.min(self.properties.width as u16) as usize;
-        let mut h = self.camera_params.h.min(self.properties.height as u16) as usize;
+        let mut x = self.image_params.x.min((self.properties.width - 1) as u16) as usize;
+        let mut y = self.image_params.y.min((self.properties.height - 1) as u16) as usize;
+        let mut w = self.image_params.w.min(self.properties.width as u16) as usize;
+        let mut h = self.image_params.h.min(self.properties.height as u16) as usize;
         if w == 0 {
             w = self.properties.width;
         }
@@ -148,10 +154,10 @@ impl ExposureController {
             y = 0;
         }
 
-        self.camera_params.x = x as u16;
-        self.camera_params.y = y as u16;
-        self.camera_params.w = w    as u16;
-        self.camera_params.h = h   as u16;
+        self.image_params.x = x as u16;
+        self.image_params.y = y as u16;
+        self.image_params.w = w    as u16;
+        self.image_params.h = h   as u16;
 
         ExposureParams {
             gain: self.camera_params.gain,
@@ -163,11 +169,11 @@ impl ExposureController {
                 height: h,
             },
             autoexp: self.camera_params.autoexp,
-            flipx: self.camera_params.flipx,
-            flipy: self.camera_params.flipy,
-            pixel_tgt: self.camera_params.pixel_tgt,
-            pixel_tol: self.camera_params.pixel_tol,
-            percentile_pix: self.camera_params.percentile_pix,
+            flipx: self.image_params.flipx,
+            flipy: self.image_params.flipy,
+            pixel_tgt: self.image_params.pixel_tgt,
+            pixel_tol: self.image_params.pixel_tol,
+            percentile_pix: self.image_params.percentile_pix,
             save: self.save_active,
         }
     }

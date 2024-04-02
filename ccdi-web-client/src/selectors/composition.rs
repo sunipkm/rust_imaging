@@ -1,4 +1,5 @@
 use ccdi_common::ExposureCommand;
+use web_sys::console::log_1;
 use yew::{Properties, Callback};
 use super::*;
 
@@ -9,6 +10,7 @@ pub struct CompositionDetail;
 #[derive(Clone, PartialEq, Properties)]
 pub struct CompositionDetailData {
     pub on_action: Callback<StateMessage>,
+    pub image_params: ImageParams,
     pub camera_params: CameraParams,
 }
 
@@ -40,7 +42,9 @@ impl Component for CompositionDetail {
         let trigger_required = ctx.props().camera_params.trigger_required;
 
         let server_action = |action: StateMessage| ctx.link().callback(
-            move |_| Msg::ServerAction(action.clone())
+            move |_| {
+                log_1(&format!("Sending action: {:?}", action).into());
+                Msg::ServerAction(action.clone()) }
         );
 
         html!{
