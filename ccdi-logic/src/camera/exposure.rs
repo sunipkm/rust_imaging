@@ -109,8 +109,12 @@ impl ExposureController {
     fn call_process_message(&self, image: Arc<RawImage>) {
         let rendering = self.image_params.rendering;
         let size = self.image_params.render_size;
+
+        // Package and send a message instructing the system to save the Raw image. ~Mit
         let message = StorageMessage::ProcessImage(image.clone());
         log_err("Self process message", self.storage_tx.send(message));
+        
+        // Package and send a message to convert the RawImage into something stupid. ~Mit
         let message = ProcessMessage::ConvertRawImage(ConvertRawImage {
             image,
             size,
