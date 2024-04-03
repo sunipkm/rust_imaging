@@ -1,3 +1,4 @@
+use log::info;
 use nanocv::{ImgSize, ImgBuf, ImgMut};
 
 use crate::{RawImage, RgbImage, RenderingType};
@@ -32,6 +33,7 @@ fn resize_channel(
 ) -> ImgBuf<u16> {
     let input_size = ImgSize::new(image.params.area.width, image.params.area.height);
     let lookup = scale_lookup_table(input_size, output_size, offset, rendering);
+    info!("input_size {:?}, output_size {:?}, offset {:?}, rendering {:?}", input_size, output_size, offset, rendering);
     scale_with_lookup_table(image, &lookup)
 }
 

@@ -2,12 +2,14 @@ use ccdi_common::to_string;
 use image::DynamicImage;
 use std::{cmp::{min, max}, io::Cursor};
 use plotters::{prelude::*, backend::RGBPixel};
+use log::{debug, info};
 
 use crate::ImageStats;
 
 // ============================================ PUBLIC =============================================
 
 pub fn render_histogram_as_bmp(stats: &ImageStats, height: usize) -> Result<Vec<u8>, String> {
+    info!("render_histogram_as_bmp()");
     let (width, height) = (stats.r.bins.len(), height);
     let mut buffer = vec![0; width*height*3];
     render_plot_to_buffer(&mut buffer, width, height, stats)?;

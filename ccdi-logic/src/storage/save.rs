@@ -7,7 +7,7 @@ use simple_expand_tilde::*;
 
 // ============================================ PUBLIC =============================================
 
-pub fn save_fits_file(image: &RawImage, file_name: &str) -> Result<(), String> {
+pub fn save_fits_file(image: &RawImage, file_name: &str) -> Result<PathBuf, String> {
     let path = PathBuf::from(file_name);
     let prefix = path.parent().ok_or("Invalid path parent".to_string())?;
     println!("Prefix: {:?}", prefix);
@@ -26,8 +26,8 @@ pub fn save_fits_file(image: &RawImage, file_name: &str) -> Result<(), String> {
         "Saving to: {:?}", prefix
     );
     let img = DynamicSerialImage::from(image.data.clone());
-    img.savefits(&prefix, "ccdi", Some("CCDI ASI"), true, true)
+    let path = img.savefits(&prefix, "ccdi", Some("CCDI ASI"), true, true)
         .map_err(to_string)?;
 
-    Ok(())
+    Ok(path)
 }

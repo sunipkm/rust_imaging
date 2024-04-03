@@ -80,8 +80,8 @@ impl Storage {
             std::fs::create_dir_all(&prefix).map_err(to_string)?;
             let storage_state = check_storage(prefix.to_str().ok_or("Err")?);
             // let storage_state = check_storage(&self.storage_name);
-            info!("Storage name: {:?}", self.storage_name);
-            info!("Prefix (abs path): {:?}", prefix);
+            // info!("Storage name: {:?}", self.storage_name);
+            // info!("Prefix (abs path): {:?}", prefix);
             self.last_storage_state = storage_state.clone();
             return Ok(vec![StateMessage::UpdateStorageState(storage_state)]);
         };
@@ -121,7 +121,7 @@ impl Storage {
         let result = match self.current_file_name() {
             None => file_name_err(),
             Some(file_name) => match save_fits_file(&image, &file_name) {
-                Ok(_) => ok_record(file_name),
+                Ok(file_name) => ok_record(file_name.to_string_lossy().to_string()),
                 Err(error) => StorageLogRecord {
                     name: file_name,
                     status: StorageLogStatus::Error(error),

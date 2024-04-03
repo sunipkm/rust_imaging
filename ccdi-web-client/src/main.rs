@@ -30,6 +30,8 @@ use crate::selectors::floatin::FloatInput;
 use crate::selectors::shooting::ShootingDetail;
 use crate::selectors::usize::UsizeInput;
 
+use log::info;
+
 // ============================================ PUBLIC =============================================
 
 pub enum Msg {
@@ -65,13 +67,14 @@ pub struct Main {
 }
 
 impl Main {
+    // This is where incoming messages from the server are handled. ~Mit
     fn receive_message(&mut self, message: ClientMessage) -> bool {
         match message {
             ClientMessage::Reconnect => {} // handled elsewhere
             ClientMessage::View(view) => self.view_state = *view,
             ClientMessage::RgbImage(image) => self.image = Some(image),
         }
-
+        
         true
     }
 
@@ -177,6 +180,13 @@ impl Main {
             .clone()
             .map(|prop| prop.basic.exposure)
             .unwrap_or(0 as f32);
+        
+        // Callback called when we press the "Send Test Message" HTML button. ~Mit
+        let client_test_message = ctx.link().callback(move |_| {
+            // Possibly correct example of how to send a message to the server. ~Mit
+            info!("Sending test message to server.");
+            Msg::SendMessage(StateMessage::ClientInformation("Hello, server!".to_string()))
+        });
 
         let time_changed_btn = ctx.link().callback(move |_| {
             let mut val = t.lock().unwrap();
@@ -317,6 +327,7 @@ impl Main {
                     />
                     </p>
                 <button onclick={time_changed_btn}>{"Update Exposure"}</button>
+                <button onclick={client_test_message}>{"Send Test Message"}</button>
                 <RenderingSelector
                     rendering_changed={rendering_changed}
                     selected_value={self.view_state.image_params.rendering}
@@ -441,6 +452,7 @@ impl Component for Main {
         }
     }
 
+    // Update parses outbound messages and acts accordingly; it also calls receive_message for inbound messages. ~Mit
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::SendMessage(message) => {

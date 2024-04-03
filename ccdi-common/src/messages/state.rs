@@ -8,6 +8,7 @@ use crate::{RgbImage, StorageState, StorageMessage, StorageDetail};
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum StateMessage {
+    ClientInformation(String), // String for testing.
     ExposureMessage(ExposureCommand),
     ImageParam(ImageParamMessage),
     CameraParam(CameraParamMessage),

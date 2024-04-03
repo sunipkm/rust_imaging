@@ -5,6 +5,7 @@ use ccdi_common::{
 };
 
 use crate::{camera::CameraController, ServiceConfig};
+use log::info;
 
 // ============================================ PUBLIC =============================================
 
@@ -39,11 +40,17 @@ impl BackendState {
         }
     }
 
+    // This is where messages are processed by the server. ~Mit
     /// Process incoming message and return messages to be sent to clients
     pub fn process(&mut self, message: StateMessage) -> Result<BackendResult, String> {
         use StateMessage::*;
 
         Ok(match message {
+            ClientInformation(info) => {
+                // Do something with the information.
+                info!("Client information received: {:?}", info);
+                self.return_view() // ?
+            }
             ImageDisplayed(image) => {
                 self.image = Some(image);
                 BackendResult::empty()

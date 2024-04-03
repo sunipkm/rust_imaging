@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 
 ccdi-common = { path = "../ccdi-common" }
+log = "0.4.21"
 
 nanocv = { git = "https://github.com/viktorchvatal/nanocv.git", features = ["serde"] }
 
