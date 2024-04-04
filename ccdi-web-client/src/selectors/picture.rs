@@ -94,22 +94,22 @@ impl Component for Picture {
         html! {
             <div>
                 <div class="image-main">
-                    <div  class="image-tools">
-                        <p>{"View"}</p>
-                        <hr />
-                        <p>{"Gain"}</p>
-                        { gain_button(ctx, self.gain,  1) }
-                        { gain_button(ctx, self.gain,  2) }
-                        { gain_button(ctx, self.gain,  4) }
-                        { gain_button(ctx, self.gain,  8) }
-                        { gain_button(ctx, self.gain, 16) }
-                        { gain_button(ctx, self.gain, 32) }
-                        { gain_button(ctx, self.gain, 64) }
-                        <p>{"Func"}</p>
-                        { function_button(ctx, self.function, TransformFunction::Linear, "Line") }
-                        { function_button(ctx, self.function, TransformFunction::Sqrt, "Sqrt") }
-                        { function_button(ctx, self.function, TransformFunction::Log2, "Log2") }
-                    </div>
+                    // <div  class="image-tools">
+                    //     <p>{"View"}</p>
+                    //     <hr />
+                    //     <p>{"Gain"}</p>
+                    //     { gain_button(ctx, self.gain,  1) }
+                    //     { gain_button(ctx, self.gain,  2) }
+                    //     { gain_button(ctx, self.gain,  4) }
+                    //     { gain_button(ctx, self.gain,  8) }
+                    //     { gain_button(ctx, self.gain, 16) }
+                    //     { gain_button(ctx, self.gain, 32) }
+                    //     { gain_button(ctx, self.gain, 64) }
+                    //     <p>{"Func"}</p>
+                    //     { function_button(ctx, self.function, TransformFunction::Linear, "Line") }
+                    //     { function_button(ctx, self.function, TransformFunction::Sqrt, "Sqrt") }
+                    //     { function_button(ctx, self.function, TransformFunction::Log2, "Log2") }
+                    // </div>
                     <div class="image-content" id={format!("imagecanvas-{}", self.uuid)}>
                         {encoded_image_to_html(ctx.props().image.as_deref())} // TODO: Fix width and height
                         // {histogram_table(stats.as_ref(), hist_h)} // TODO: Fix width of histogram table

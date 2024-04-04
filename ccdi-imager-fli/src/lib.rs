@@ -12,7 +12,7 @@ use ccdi_imager_interface::{
     ImagerDriver, ImagerProperties, TemperatureRequest,
 };
 
-use log::{info, warn};
+use log::warn;
 
 use cameraunit_fli::{
     get_camera_ids, open_camera, CameraInfo, CameraUnit, CameraUnitFLI, DynamicSerialImage,
@@ -110,10 +110,6 @@ impl ImagerDevice for FLICameraImager {
                     bin_x: 1,
                     bin_y: 1,
                 };
-                info!(
-                    "Firstcall ROI: ({}, {}), {} x {}",
-                    roi.x_min, roi.y_min, roi.width, roi.height,
-                );
                 *val = false;
                 roi
             } else {
@@ -127,7 +123,6 @@ impl ImagerDevice for FLICameraImager {
                 }
             }
         };
-
         self.device.set_roi(&roi).map_err(|x| x.to_string())?;
         self.device.start_exposure().map_err(|x| x.to_string())?;
         Ok(())

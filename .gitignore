@@ -13,3 +13,5 @@ Cargo.lock
 test.fits
 
 .vscode/settings.json
+
+ccdi-web-service/server
