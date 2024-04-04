@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::Error;
 use yew::{html, Component, Context, Html, Callback, Properties};
 use yew_websocket::websocket::{WebSocketService, WebSocketStatus, WebSocketTask};
-use ccdi_common::{ClientMessage, StateMessage, ConnectionState, rgb_image_from_bytes, to_string};
+use ccdi_common::{ClientMessage, StateMessage, ConnectionState, to_string};
 use gloo::console;
 use gloo::timers::callback::Interval;
 
@@ -135,8 +135,8 @@ fn deserialize(message: WebsocketMessage) -> Result<ClientMessage, String> {
     match message {
         WebsocketMessage::Text(json_string)
             => serde_json::from_str::<ClientMessage>(&json_string).map_err(to_string),
-        WebsocketMessage::Binary(bytes) => Ok(ClientMessage::RgbImage(
-            Arc::new(rgb_image_from_bytes(bytes)?))
+        WebsocketMessage::Binary(bytes) => Ok(ClientMessage::PngImage(
+            Arc::new(bytes))
         ),
         WebsocketMessage::ReceptionError(error) => Err(error),
     }

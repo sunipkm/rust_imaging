@@ -1,4 +1,4 @@
-use ccdi_common::{log_err, rgb_image_to_bytes, to_string, ClientMessage, StateMessage};
+use ccdi_common::{log_err, to_string, ClientMessage, StateMessage};
 use log::*;
 use std::collections::HashMap;
 use std::convert::Infallible;
@@ -71,7 +71,9 @@ pub fn create_websocket_service(
 
 fn serialize(message: &ClientMessage) -> Result<Message, String> {
     match message {
-        ClientMessage::RgbImage(image) => Ok(Message::binary(rgb_image_to_bytes(image))),
+        ClientMessage::PngImage(image) => Ok(
+            Message::binary(image.as_ref().to_vec())
+        ),
         _other => Ok(Message::text(
             serde_json::to_string(&message).map_err(to_string)?,
         )),

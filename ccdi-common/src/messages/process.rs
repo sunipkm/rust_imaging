@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use nanocv::ImgSize;
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 
-use crate::{RawImage, RenderingType};
+use crate::RawImage;
 
 // ============================================ PUBLIC =============================================
 
@@ -17,5 +17,4 @@ pub enum ProcessMessage {
 pub struct ConvertRawImage {
     pub image: Arc<RawImage>,
     pub size: ImgSize,
-    pub rendering: RenderingType,
 }

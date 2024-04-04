@@ -1,14 +1,18 @@
-use std::{thread::{self, JoinHandle}, time::Duration, sync::{mpsc::RecvTimeoutError, Arc}};
-use std::sync::mpsc::{Sender, Receiver};
-
-use ccdi_common::{StateMessage, ClientMessage, log_err, ProcessMessage, StorageMessage, IoMessage};
-use log::{error, debug};
-
-use crate::{
-    state::BackendState,
-    convert::handle_process_message, ServiceConfig, storage::Storage,
-    io::IoManager
+use std::sync::mpsc::{Receiver, Sender};
+use std::{
+    io::Cursor,
+    sync::{mpsc::RecvTimeoutError, Arc},
+    thread::{self, JoinHandle},
+    time::Duration,
 };
+
+use ccdi_common::{
+    log_err, ClientMessage, IoMessage, ProcessMessage, StateMessage, StorageMessage,
+};
+use image::{DynamicImage, ImageOutputFormat};
+use log::{debug, error};
+
+use crate::{io::IoManager, state::BackendState, storage::Storage, ServiceConfig};
 
 // ============================================ PUBLIC =============================================
 
@@ -28,22 +32,21 @@ pub fn start_logic_thread(
     thread::Builder::new()
         .name("logic".to_string())
         .spawn(move || {
-            let mut state = BackendState::new(
-                params.demo_mode, process_tx, storage_tx.clone(), config
-            );
+            let mut state =
+                BackendState::new(params.demo_mode, process_tx, storage_tx.clone(), config);
 
             loop {
                 match server_rx.recv_timeout(Duration::from_millis(50)) {
                     // Process the received message
-                    Ok(message) => receive_message(
-                        &mut state, message, &clients_tx, &storage_tx, &io_tx
-                    ),
+                    Ok(message) => {
+                        receive_message(&mut state, message, &clients_tx, &storage_tx, &io_tx)
+                    }
                     // Last sender disconnected - exit thread
                     Err(RecvTimeoutError::Disconnected) => return,
                     // No messages received within timeout - perform periodic tasks
-                    Err(RecvTimeoutError::Timeout) => periodic_tasks(
-                        &mut state, &clients_tx, &storage_tx, &io_tx
-                    ),
+                    Err(RecvTimeoutError::Timeout) => {
+                        periodic_tasks(&mut state, &clients_tx, &storage_tx, &io_tx)
+                    }
                 }
             }
         })
@@ -64,20 +67,47 @@ pub fn start_process_thread(
                     Ok(message) => {
                         debug!("Handling image process request");
 
-                        let reply = handle_process_message(message);
+                        // let reply = handle_process_message(message);
+                        let reply = match message {
+                            ProcessMessage::ConvertRawImage(message) => {
+                                let img = message.image;
+                                let size = message.size;
+                                let img = DynamicImage::from(&img.data);
+                                let img = img.resize(
+                                    size.x as u32,
+                                    size.y as u32,
+                                    image::imageops::FilterType::Nearest,
+                                );
+                                let mut buf = Cursor::new(Vec::new());
+                                let img = img
+                                    .write_to(&mut buf, ImageOutputFormat::Png)
+                                    .map_err(|err| format!("Error converting to PNG: {:?}", err));
+                                match img {
+                                    Ok(_) => {
+                                        let img = buf.into_inner();
+                                        vec![ClientMessage::PngImage(Arc::new(img))]
+                                    }
+                                    Err(err) => {
+                                        error!("Error converting to PNG: {:?}", err);
+                                        return;
+                                    }
+                                }
+                            }
+                        };
 
                         debug!("Image process finished");
 
                         for message in reply.into_iter() {
-                            if let ClientMessage::RgbImage(ref image) = message {
-                                log_err("Send process message to server", server_tx.send(
-                                    StateMessage::ImageDisplayed(image.clone())
-                                ));
+                            if let ClientMessage::PngImage(ref image) = message {
+                                log_err(
+                                    "Send process message to server",
+                                    server_tx.send(StateMessage::ImageDisplayed(image.clone())),
+                                );
                             }
 
                             log_err("Send process message to client", clients_tx.send(message));
                         }
-                    },
+                    }
                     // Last sender disconnected - exit thread
                     Err(_) => return,
                 }
@@ -99,12 +129,16 @@ pub fn start_storage_thread(
             let send_results = |result: Result<Vec<StateMessage>, String>| match result {
                 Ok(messages) => {
                     for message in messages {
-                        log_err("Send message from storage to server", server_tx.send(message));
+                        log_err(
+                            "Send message from storage to server",
+                            server_tx.send(message),
+                        );
                     }
-                },
+                }
                 Err(error) => error!(
-                    "Processing storage messages or periodic task failed: {}", error
-                )
+                    "Processing storage messages or periodic task failed: {}",
+                    error
+                ),
             };
 
             loop {
@@ -134,12 +168,16 @@ pub fn start_io_thread(
             let send_results = |result: Result<Vec<StateMessage>, String>| match result {
                 Ok(messages) => {
                     for message in messages {
-                        log_err("Send message from storage to server", server_tx.send(message));
+                        log_err(
+                            "Send message from storage to server",
+                            server_tx.send(message),
+                        );
                     }
-                },
+                }
                 Err(error) => error!(
-                    "Processing storage messages or periodic task failed: {}", error
-                )
+                    "Processing storage messages or periodic task failed: {}",
+                    error
+                ),
             };
 
             loop {
@@ -185,28 +223,19 @@ fn periodic_tasks(
     }
 }
 
-fn send_client_messages(
-    messages: Vec<ClientMessage>,
-    clients_tx: &Sender<ClientMessage>,
-) {
+fn send_client_messages(messages: Vec<ClientMessage>, clients_tx: &Sender<ClientMessage>) {
     for message in messages {
         log_err("Send client response", clients_tx.send(message));
     }
 }
 
-fn send_io_messages(
-    messages: Vec<IoMessage>,
-    io_tx: &Sender<IoMessage>,
-) {
+fn send_io_messages(messages: Vec<IoMessage>, io_tx: &Sender<IoMessage>) {
     for message in messages {
         log_err("Send io response", io_tx.send(message));
     }
 }
 
-fn send_storage_messages(
-    messages: Vec<StorageMessage>,
-    storage_tx: &Sender<StorageMessage>,
-) {
+fn send_storage_messages(messages: Vec<StorageMessage>, storage_tx: &Sender<StorageMessage>) {
     for message in messages {
         log_err("Send storage response", storage_tx.send(message));
     }

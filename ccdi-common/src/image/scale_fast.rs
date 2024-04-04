@@ -1,24 +1,20 @@
 use log::info;
 use nanocv::{ImgSize, ImgBuf, ImgMut};
 
-use crate::{RawImage, RgbImage, RenderingType};
+use crate::{RawImage, RgbImage};
 
 use super::{lookup::{Offset, LookupTable, scale_lookup_table}, grid::draw_thirds_grid};
 
 // ============================================ PUBLIC =============================================
 
 pub fn debayer_scale_fast(
-    input: &RawImage, size: ImgSize, rendering: RenderingType
+    input: &RawImage, size: ImgSize
 ) -> RgbImage<u16> {
     let offsets = &OFFSET_GRBG;
-    let r = resize_channel(input, size, offsets.r, rendering);
-    let g = resize_channel(input, size, offsets.g1, rendering);
-    let b = resize_channel(input, size, offsets.b, rendering);
+    let r = resize_channel(input, size, offsets.r);
+    let g = resize_channel(input, size, offsets.g1);
+    let b = resize_channel(input, size, offsets.b);
     let mut image = RgbImage::from(r, g, b).expect("Logic error");
-
-    if rendering == RenderingType::Corners1x {
-        draw_thirds_grid(&mut image);
-    }
 
     image
 }
@@ -29,11 +25,10 @@ fn resize_channel(
     image: &RawImage,
     output_size: ImgSize,
     offset: Offset,
-    rendering: RenderingType
 ) -> ImgBuf<u16> {
     let input_size = ImgSize::new(image.params.area.width, image.params.area.height);
-    let lookup = scale_lookup_table(input_size, output_size, offset, rendering);
-    info!("input_size {:?}, output_size {:?}, offset {:?}, rendering {:?}", input_size, output_size, offset, rendering);
+    let lookup = scale_lookup_table(input_size, output_size, offset);
+    info!("input_size {:?}, output_size {:?}, offset {:?}", input_size, output_size, offset);
     scale_with_lookup_table(image, &lookup)
 }
 

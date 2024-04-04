@@ -11,7 +11,7 @@ use ccdi_common::{
     StorageMessage, StorageState, ViewState,
 };
 use ccdi_imager_interface::{DeviceDescriptor, ExposureArea, ImagerDriver};
-use log::info;
+use log::{info, debug};
 
 use crate::ServiceConfig;
 
@@ -137,7 +137,7 @@ impl CameraController {
     pub fn update_image_params(&mut self, message: ImageParamMessage) {
         match message {
             ImageParamMessage::SetRoi((x, y, w, h)) => {
-                info!("New ROI: X {} Y {}, {} x {}", x, y, w, h);
+                debug!("New ROI: X {} Y {}, {} x {}", x, y, w, h);
                 self.image_params.x = x;
                 self.image_params.y = y;
                 self.image_params.w = w;
@@ -148,9 +148,6 @@ impl CameraController {
             ImageParamMessage::SetPercentilePix(value) => self.image_params.percentile_pix = value,
             ImageParamMessage::SetPixelTgt(value) => self.image_params.pixel_tgt = value,
             ImageParamMessage::SetPixelTol(value) => self.image_params.pixel_tol = value,
-            ImageParamMessage::SetRenderingType(rendering) => {
-                self.image_params.rendering = rendering
-            }
         }
         if let Some(camera) = self.connected.as_mut() {
             camera.update_image_params(self.image_params.clone());

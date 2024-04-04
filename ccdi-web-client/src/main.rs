@@ -21,7 +21,6 @@ use components::menu::{Menu, MenuItem};
 use components::status_bar::StatusBar;
 use selectors::composition::CompositionDetail;
 use selectors::picture::Picture;
-use selectors::rendering::RenderingSelector;
 
 use crate::components::system::System;
 use crate::selectors::bool::BoolSelector;
@@ -54,7 +53,7 @@ struct RoundSize {
 }
 
 pub struct Main {
-    pub image: Option<Arc<RgbImage<u16>>>, // TODO: Change this to a smaller image type, e.g. DynamicSerialImage
+    pub image: Option<Arc<Vec<u8>>>, // TODO: Change this to a smaller image type, e.g. DynamicSerialImage
     pub view_state: ViewState,
     pub connection_state: ConnectionState,
     pub connection_context: Option<Scope<ConnectionService>>,
@@ -72,7 +71,7 @@ impl Main {
         match message {
             ClientMessage::Reconnect => {} // handled elsewhere
             ClientMessage::View(view) => self.view_state = *view,
-            ClientMessage::RgbImage(image) => self.image = Some(image),
+            ClientMessage::PngImage(image) => self.image = Some(image),
         }
         
         true
@@ -103,10 +102,6 @@ impl Main {
         let time_changed = ctx
             .link()
             .callback(|time: f64| Msg::CParamUpdate(CameraParamMessage::SetTime(time)));
-
-        let rendering_changed = ctx.link().callback(|value: RenderingType| {
-            Msg::IParamUpdate(ImageParamMessage::SetRenderingType(value))
-        });
 
         let autoexp_changed = ctx
             .link()
@@ -328,10 +323,6 @@ impl Main {
                     </p>
                 <button onclick={time_changed_btn}>{"Update Exposure"}</button>
                 <button onclick={client_test_message}>{"Send Test Message"}</button>
-                <RenderingSelector
-                    rendering_changed={rendering_changed}
-                    selected_value={self.view_state.image_params.rendering}
-                />
                 <CompositionDetail
                     on_action={action}
                     image_params={self.view_state.image_params.clone()}

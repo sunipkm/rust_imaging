@@ -1,15 +1,10 @@
-use std::{
-    collections::VecDeque,
-    path::{Path, PathBuf},
-    process::Command,
-    sync::Arc,
-};
+use std::{collections::VecDeque, path::PathBuf, process::Command, sync::Arc};
 
 use ccdi_common::{
     to_string, RawImage, StateMessage, StorageCapacity, StorageDetail, StorageLogRecord,
     StorageLogStatus, StorageMessage, StorageState,
 };
-use log::{debug, info};
+use log::debug;
 use simple_expand_tilde::expand_tilde;
 
 use crate::ServiceConfig;

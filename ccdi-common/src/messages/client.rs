@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use serialimage::DynamicSerialImage;
-use ccdi_imager_interface::{ImagerProperties, ExposureParams, ExposureArea};
+use ccdi_imager_interface::{ExposureArea, ExposureParams, ImagerProperties};
 use nanocv::ImgSize;
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
+use serialimage::DynamicSerialImage;
 
-use crate::{RgbImage, RenderingType, StorageState, StorageDetail};
+use crate::{StorageDetail, StorageState};
 
 use super::gui_config::GuiConfig;
 
@@ -15,13 +15,13 @@ use super::gui_config::GuiConfig;
 pub enum ClientMessage {
     Reconnect,
     View(Box<ViewState>),
-    RgbImage(Arc<RgbImage<u16>>),
+    PngImage(Arc<Vec<u8>>),
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct RawImage {
     pub params: ExposureParams,
-    pub data: DynamicSerialImage
+    pub data: DynamicSerialImage,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Default)]
@@ -38,7 +38,6 @@ pub struct ViewState {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct ImageParams {
     // pub loop_enabled: bool,
-    pub rendering: RenderingType,
     pub render_size: ImgSize,
     pub percentile_pix: f32,
     pub pixel_tgt: f32,
@@ -54,11 +53,10 @@ pub struct ImageParams {
 impl ImageParams {
     pub fn new(render_size: ImgSize, roi: ExposureArea) -> Self {
         Self {
-            rendering: RenderingType::FullImage,
             render_size,
             percentile_pix: 99.5,
-            pixel_tgt: 40000./65535.,
-            pixel_tol: 5000./65535.,
+            pixel_tgt: 40000. / 65535.,
+            pixel_tol: 5000. / 65535.,
             x: roi.x as u16,
             y: roi.y as u16,
             w: roi.width as u16,
@@ -71,7 +69,15 @@ impl ImageParams {
 
 impl Default for ImageParams {
     fn default() -> Self {
-        ImageParams::new(ImgSize::new(900, 600), ExposureArea { x: 0, y: 0, width: 0, height: 0 })
+        ImageParams::new(
+            ImgSize::new(900, 600),
+            ExposureArea {
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+            },
+        )
     }
 }
 
@@ -135,7 +141,7 @@ impl Default for LogicStatus {
 pub enum ConnectionState {
     Disconnected,
     Connecting,
-    Established
+    Established,
 }
 
 impl Default for ConnectionState {

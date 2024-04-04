@@ -1,7 +1,5 @@
 use nanocv::ImgSize;
 
-use crate::RenderingType;
-
 // ============================================ PUBLIC =============================================
 
 pub struct LookupTable {
@@ -16,16 +14,12 @@ pub struct Offset {
 }
 
 pub fn scale_lookup_table(
-    input: ImgSize, output: ImgSize, offset: Offset, rendering: RenderingType
+    input: ImgSize, output: ImgSize, offset: Offset
 ) -> LookupTable {
     let half_input = ImgSize { x: input.x/2, y: input.y/2 };
 
     apply_offsets(
-        match rendering {
-            RenderingType::FullImage => lookup_table_full_image(half_input, output),
-            RenderingType::Center1x => lookup_table_center(half_input, output),
-            RenderingType::Corners1x => lookup_table_corners(half_input, output),
-        },
+        lookup_table_full_image(half_input, output),
         offset
     )
 }

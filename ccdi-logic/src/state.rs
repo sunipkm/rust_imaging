@@ -1,8 +1,6 @@
 use std::sync::{mpsc::Sender, Arc};
 
-use ccdi_common::{
-    ClientMessage, IoMessage, ProcessMessage, RgbImage, StateMessage, StorageMessage,
-};
+use ccdi_common::{ClientMessage, IoMessage, ProcessMessage, StateMessage, StorageMessage};
 
 use crate::{camera::CameraController, ServiceConfig};
 use log::info;
@@ -12,7 +10,7 @@ use log::info;
 pub struct BackendState {
     camera: CameraController,
     /// Last image sent to clients
-    image: Option<Arc<RgbImage<u16>>>,
+    image: Option<Arc<Vec<u8>>>,
 }
 
 impl BackendState {
@@ -29,7 +27,7 @@ impl BackendState {
                         let mut drv = ccdi_imager_asicam::ASICameraDriver::new();
                         drv.update_opt_config(config.exp.get_optimum_exp_config().unwrap());
                         Box::new(drv)
-                    },
+                    }
                     true => Box::new(ccdi_imager_demo::DemoImagerDriver::new()),
                 },
                 process_tx,
@@ -92,7 +90,7 @@ impl BackendState {
 
                 BackendResult::client(match self.image.as_ref() {
                     None => vec![view_msg],
-                    Some(image) => vec![view_msg, ClientMessage::RgbImage(image.clone())],
+                    Some(image) => vec![view_msg, ClientMessage::PngImage(image.clone())],
                 })
             }
             UpdateStorageState(storage_state) => {

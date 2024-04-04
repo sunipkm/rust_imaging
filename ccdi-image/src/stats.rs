@@ -1,6 +1,7 @@
 use std::cmp::{max, min};
 
 use ccdi_common::RgbImage;
+use image::{codecs::png::PngDecoder, DynamicImage};
 use nanocv::Img;
 
 // ============================================ PUBLIC =============================================
@@ -11,6 +12,7 @@ pub struct ImageStats {
     pub r: Histogram,
     pub g: Histogram,
     pub b: Histogram,
+    pub w: Histogram,
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -54,7 +56,11 @@ impl Histogram {
     }
 }
 
-pub fn compute_image_stats(image: &RgbImage<u16>, size: usize) -> ImageStats {
+pub fn compute_image_stats(image: &Vec<u8>, size: usize) -> ImageStats {
+    let decoder = PngDecoder::new(std::io::Cursor::new(image)).unwrap();
+    let image = DynamicImage::from_decoder(decoder).unwrap();
+    let image = DynamicSerialImage::from(image);
+    // let image = DynamicImage::from_decoder(PngDecoder::from(std::io::Cursor::new(image)).unwrap()).unwrap();
     let r = compute_histogram(image.red(), size, compute_channel_stats(image.red()));
     let g = compute_histogram(image.green(), size, compute_channel_stats(image.green()));
     let b = compute_histogram(image.blue(), size, compute_channel_stats(image.blue()));

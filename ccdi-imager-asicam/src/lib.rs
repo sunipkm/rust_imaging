@@ -10,7 +10,7 @@ use ccdi_imager_interface::{
     ImagerDriver, ImagerProperties, TemperatureRequest,
 };
 
-use log::info;
+use log::{info, warn};
 
 use cameraunit_asi::{
     get_camera_ids, open_camera, CameraInfo, CameraUnit, CameraUnitASI, DynamicSerialImage,
@@ -23,7 +23,7 @@ pub struct ASICameraDriver {
 
 impl ASICameraDriver {
     pub fn new() -> Self {
-        Self {opt: None}
+        Self { opt: None }
     }
 
     pub fn update_opt_config(&mut self, config: OptimumExposureConfig) {
@@ -153,15 +153,25 @@ impl ImagerDevice for ASICameraImager {
     ) -> Result<DynamicSerialImage, String> {
         let img = self.device.download_image().map_err(|x| x.to_string())?;
         if params.autoexp & self.opt.is_some() {
-            if let Ok((exposure, _)) = self.opt.unwrap().find_optimum_exposure(
+            match self.opt.unwrap().find_optimum_exposure(
                 img.into_luma().into_vec(),
                 self.device.get_exposure(),
                 1,
             ) {
-                self.device
-                    .set_exposure(exposure)
-                    .map_err(|x| x.to_string())?;
-                params.time = exposure.as_secs_f64();
+                Ok((exposure, _)) => {
+                    let res = self
+                        .device
+                        .set_exposure(exposure)
+                        .map_err(|x| x.to_string());
+                    if res.is_err() {
+                        warn!("Set exposure failed: {}", res.unwrap_err());
+                        return Err("Autoexposure set exposure failed".to_owned());
+                    }
+                    params.time = exposure.as_secs_f64();
+                },
+                Err(e) => {
+                    warn!("Autoexposure failed: {}", e);
+                },
             }
         }
         // if params.flipx || params.flipy {
@@ -181,7 +191,7 @@ impl ImagerDevice for ASICameraImager {
             params.area.height = img.height();
         }
 
-        Ok(img.into())
+        Ok(img)
     }
 
     fn set_temperature(&mut self, request: TemperatureRequest) -> Result<(), String> {

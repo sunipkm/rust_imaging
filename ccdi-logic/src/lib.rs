@@ -1,7 +1,6 @@
 mod thread;
 mod state;
 mod camera;
-mod convert;
 mod config;
 mod storage;
 mod io;

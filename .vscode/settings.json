@@ -2,6 +2,7 @@
     "rust-analyzer.linkedProjects": [
         "./ccdi-web-client/Cargo.toml",
         "./ccdi-logic/Cargo.toml",
-        "./ccdi-common/Cargo.toml"
+        "./ccdi-common/Cargo.toml",
+        "./ccdi-web-client/Cargo.toml"
     ]
 }

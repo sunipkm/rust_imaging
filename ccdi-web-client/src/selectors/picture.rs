@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
 use base64::{engine::general_purpose::STANDARD, Engine};
-use ccdi_common::RgbImage;
+// use ccdi_common::RgbImage;
 use ccdi_image::{
-    compute_image_stats, render_histogram_as_bmp, rgb_image_to_bmp, ImageStats, Transform,
+    // compute_image_stats, render_histogram_as_bmp, rgb_image_to_bmp, ImageStats,
+    // Transform,
     TransformFunction,
 };
 
@@ -32,7 +33,7 @@ pub struct Picture {
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct PictureData {
-    pub image: Option<Arc<RgbImage<u16>>>,
+    pub image: Option<Arc<Vec<u8>>>,
     pub hist_width: usize,
     pub hist_height: usize,
     pub onresize: Callback<(i32, i32)>,
@@ -59,11 +60,11 @@ impl Component for Picture {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let transform = Transform {
-            gain: self.gain,
-            function: self.function,
-            sub: 500,
-        };
+        // let transform = Transform {
+        //     gain: self.gain,
+        //     function: self.function,
+        //     sub: 500,
+        // };
 
         let mut width: i32 = 0;
         let mut height: i32 = 0;
@@ -82,21 +83,13 @@ impl Component for Picture {
                             )
                             .into(),
                         );
-                        width = canvas.offset_width().into();
-                        height = canvas.offset_height().into();
+                        width = canvas.offset_width();
+                        height = canvas.offset_height();
                         ctx.props().onresize.emit((width, height));
                     }
                 }
             }
         }
-
-        let hist_w = width - 20;
-        let hist_h = ctx.props().hist_height;
-        let stats = ctx
-            .props()
-            .image
-            .as_deref()
-            .map(|img| compute_image_stats(img, hist_w as usize));
 
         html! {
             <div>
@@ -118,8 +111,8 @@ impl Component for Picture {
                         { function_button(ctx, self.function, TransformFunction::Log2, "Log2") }
                     </div>
                     <div class="image-content" id={format!("imagecanvas-{}", self.uuid)}>
-                        {rgb_image_to_html(ctx.props().image.as_deref(), transform)} // TODO: Fix width and height
-                        {histogram_table(stats.as_ref(), hist_h)} // TODO: Fix width of histogram table
+                        {encoded_image_to_html(ctx.props().image.as_deref())} // TODO: Fix width and height
+                        // {histogram_table(stats.as_ref(), hist_h)} // TODO: Fix width of histogram table
                     </div>
                 </div>
             </div>
@@ -167,61 +160,60 @@ fn gain_button(ctx: &Context<Picture>, current_gain: i32, button_gain: i32) -> H
     }
 }
 
-fn rgb_image_to_html(image: Option<&RgbImage<u16>>, transform: Transform) -> Html {
-    match image.and_then(|image| rgb_to_jpeg_base64(image, transform)) {
+fn encoded_image_to_html(image: Option<&Vec<u8>>) -> Html {
+    match image.and_then(png_to_base64) {
         None => html! {},
         Some(ref base64) => html! {
-            <img src={format!("data:image/bmp;base64,{}", base64)} />
+            <img class="contain" src={format!("data:image/bmp;base64,{}", base64)} />
         },
     }
 }
 
-fn histogram_table(stats: Option<&ImageStats>, height: usize) -> Html {
-    match stats {
-        None => html! {},
-        Some(stats) => html! {
-            <div class="hist-table">
-                <div class="div-table-row">
-                    <div class="hist-table-col">
-                        {limits(stats.total.min, stats.r.min, stats.g.min, stats.b.min)}
-                    </div>
-                    <div class="hist-table-col">
-                        {histogram_image(stats, height)}
-                    </div>
-                    <div class="hist-table-col">
-                        {limits(stats.total.max, stats.r.max, stats.g.max, stats.b.max)}
-                    </div>
-                </div>
-            </div>
-        },
-    }
-}
+// fn histogram_table(stats: Option<&ImageStats>, height: usize) -> Html {
+//     match stats {
+//         None => html! {},
+//         Some(stats) => html! {
+//             <div class="hist-table">
+//                 <div class="div-table-row">
+//                     <div class="hist-table-col">
+//                         {limits(stats.total.min, stats.r.min, stats.g.min, stats.b.min)}
+//                     </div>
+//                     <div class="hist-table-col">
+//                         {histogram_image(stats, height)}
+//                     </div>
+//                     <div class="hist-table-col">
+//                         {limits(stats.total.max, stats.r.max, stats.g.max, stats.b.max)}
+//                     </div>
+//                 </div>
+//             </div>
+//         },
+//     }
+// }
 
-fn histogram_image(stats: &ImageStats, height: usize) -> Html {
-    let payload = render_histogram_as_bmp(stats, height).map(|data| STANDARD.encode(data));
+// fn histogram_image(stats: &ImageStats, height: usize) -> Html {
+//     let payload = render_histogram_as_bmp(stats, height).map(|data| STANDARD.encode(data));
 
-    match payload {
-        Err(error) => html! { <p>{"Histogram err:"} {error}</p> },
-        Ok(ref base64) => html! {
-            <img class={"gray-border"} src={format!("data:image/bmp;base64,{}", base64)} />
-        },
-    }
-}
+//     match payload {
+//         Err(error) => html! { <p>{"Histogram err:"} {error}</p> },
+//         Ok(ref base64) => html! {
+//             <img class={"gray-border"} src={format!("data:image/bmp;base64,{}", base64)} />
+//         },
+//     }
+// }
 
-fn rgb_to_jpeg_base64(image: &RgbImage<u16>, transform: Transform) -> Option<String> {
-    let encoded_jpeg = rgb_image_to_bmp(image, transform).ok()?;
-    let encoded_base64 = STANDARD.encode(encoded_jpeg);
+fn png_to_base64(image: &Vec<u8>) -> Option<String> {
+    let encoded_base64 = STANDARD.encode(image);
     Some(encoded_base64)
 }
 
-fn limits(all: u16, r: u16, g: u16, b: u16) -> Html {
-    html! {
-        <>
-            <div>{all}</div>
-            <hr/>
-            <div class="red">{r}</div>
-            <div class="green">{g}</div>
-            <div class="blue">{b}</div>
-        </>
-    }
-}
+// fn limits(all: u16, r: u16, g: u16, b: u16) -> Html {
+//     html! {
+//         <>
+//             <div>{all}</div>
+//             <hr/>
+//             <div class="red">{r}</div>
+//             <div class="green">{g}</div>
+//             <div class="blue">{b}</div>
+//         </>
+//     }
+// }

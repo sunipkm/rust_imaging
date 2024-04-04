@@ -21,6 +21,6 @@ fn convert_raw_image(message: ConvertRawImage) -> ClientMessage {
         message.image.params.area.width, message.image.params.area.height,
         message.size.x, message.size.y
     );
-    let rgb_image = Arc::new(debayer_scale_fast(&message.image, message.size, message.rendering));
-    ClientMessage::RgbImage(rgb_image)
+    let rgb_image = Arc::new(debayer_scale_fast(&message.image, message.size));
+    ClientMessage::PngImage(rgb_image)
 }

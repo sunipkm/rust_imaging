@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 
-use crate::{RgbImage, StorageState, StorageMessage, StorageDetail};
+use crate::{StorageDetail, StorageMessage, StorageState};
 
 // ============================================ PUBLIC =============================================
 
@@ -13,7 +13,7 @@ pub enum StateMessage {
     ImageParam(ImageParamMessage),
     CameraParam(CameraParamMessage),
     ClientConnected,
-    ImageDisplayed(Arc<RgbImage<u16>>),
+    ImageDisplayed(Arc<Vec<u8>>),
     UpdateStorageState(StorageState),
     TriggerValueChanged(bool),
     StorageMessage(StorageMessage),
@@ -32,7 +32,6 @@ pub enum ImageParamMessage {
     // SetTime(f64),
     // SetTemp(f64),
     // SetHeatingPwm(f64),
-    SetRenderingType(RenderingType),
     // SetTriggerRequired(bool),
     // SetAutoExp(bool),
     SetPercentilePix(f32),
@@ -60,11 +59,4 @@ pub enum CameraParamMessage {
     // SetRoi((u16, u16, u16, u16)),
     // SetFlipX(bool),
     // SetFlipY(bool),
-}
-
-#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum RenderingType {
-    FullImage,
-    Center1x,
-    Corners1x,
 }
