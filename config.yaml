@@ -1,11 +1,11 @@
 storage: ~/storage/
 turn_off_command: ''
 savecadence:
-  secs: 0
+  secs: 60
   nanos: 0
 render_size:
-  x: 900
-  y: 600
+  x: 1024
+  y: 1024
 roi:
   x: 0
   y: 0
@@ -18,7 +18,7 @@ exp:
   pixel_exclusion: 100
   min_exopsure:
     secs: 0
-    nanos: 32000
+    nanos: 1000000
   max_exposure:
     secs: 10
     nanos: 0

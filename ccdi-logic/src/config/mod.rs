@@ -35,7 +35,7 @@ pub struct OptExposureConfig {
 
 impl OptExposureConfig {
     pub fn get_optimum_exp_config(&self) -> Option<OptimumExposure> {
-        OptimumExposureBuilder::default()
+        let conf = OptimumExposureBuilder::default()
         .percentile_pix(self.percentile_pix)
         .pixel_tgt(self.pixel_tgt)
         .pixel_uncertainty(self.pixel_tol)
@@ -43,8 +43,14 @@ impl OptExposureConfig {
         .min_allowed_exp(self.min_exopsure)
         .max_allowed_exp(self.max_exposure)
         .max_allowed_bin(self.max_bin)
-        .build()
-        .ok()
+        .build();
+        match conf {
+            Ok(c) => Some(c),
+            Err(e) => {
+                info!("Error creating OptimumExposure: {}", e);
+                None
+            }
+        }
     }
 }
 
