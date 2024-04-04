@@ -1,3 +1,4 @@
+#![cfg(target_os = "linux")]
 use once_cell::sync::Lazy;
 use std::{
     fmt::Debug,

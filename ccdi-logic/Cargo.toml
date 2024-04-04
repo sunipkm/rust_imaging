@@ -21,9 +21,10 @@ nanocv = { git = "https://github.com/viktorchvatal/nanocv.git" }
 ccdi-common = { path = "../ccdi-common" }
 ccdi-imager-interface = { path = "../ccdi-imager-interface" }
 ccdi-imager-demo = { path = "../ccdi-imager-demo" }
-ccdi-imager-asicam = { path = "../ccdi-imager-asicam" }
 ccdi-imager-fli = { path = "../ccdi-imager-fli" }
 
+[target.'cfg(target_os = "linux")'.dependencies]
+ccdi-imager-asicam = { path = "../ccdi-imager-asicam" }
 
 [dev-dependencies]
 indoc = "2.0.3"

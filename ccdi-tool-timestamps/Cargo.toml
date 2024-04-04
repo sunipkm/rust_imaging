@@ -7,6 +7,6 @@ edition = "2021"
 [dependencies]
 fitsio = "0.21.2"
 itertools = "0.11.0"
-chrono = "0.4.26"
+chrono = "0.4.37"
 
 ccdi-common = { path = "../ccdi-common" }
