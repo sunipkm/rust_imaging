@@ -85,10 +85,6 @@ impl ImagerDevice for FLICameraImager {
             .cancel_capture()
             .map_err(|x| println!("ImagerDeviceClose: CancelCapture: {}", x))
             .expect("May fail");
-        self.device
-            .set_cooler(false)
-            .map_err(|x| println!("ImagerDeviceClose: SetCooler: {}", x))
-            .expect("May fail");
     }
 
     fn start_exposure(&mut self, params: &ExposureParams) -> Result<(), String> {
