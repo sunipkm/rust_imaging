@@ -4,10 +4,14 @@ use argh::FromArgs;
 
 #[derive(FromArgs)]
 /// CCD imaging service
-pub struct ServiceConfig {
+pub struct ServerConfig {
     /// run with a demo driver
-    #[argh(switch)]
-    pub demo: bool,
+    #[argh(option, default = "String::from(\"asi\")")]
+    pub camera: String,
+
+    /// server address
+    #[argh(option, default = "default_addr()")]
+    pub addr: u16,
 
     /// enable debug logging
     #[argh(switch)]
@@ -16,4 +20,8 @@ pub struct ServiceConfig {
     /// log file
     #[argh(option)]
     pub log: Option<String>,
+}
+
+fn default_addr() -> u16 {
+    8081
 }

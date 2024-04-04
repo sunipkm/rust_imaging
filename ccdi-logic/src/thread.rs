@@ -17,7 +17,7 @@ use crate::{io::IoManager, state::BackendState, storage::Storage, ServiceConfig}
 // ============================================ PUBLIC =============================================
 
 pub struct LogicParams {
-    pub demo_mode: bool,
+    pub demo_mode: String,
 }
 
 pub fn start_logic_thread(
@@ -33,7 +33,7 @@ pub fn start_logic_thread(
         .name("logic".to_string())
         .spawn(move || {
             let mut state =
-                BackendState::new(params.demo_mode, process_tx, storage_tx.clone(), config);
+                BackendState::new(&params.demo_mode, process_tx, storage_tx.clone(), config);
 
             loop {
                 match server_rx.recv_timeout(Duration::from_millis(50)) {

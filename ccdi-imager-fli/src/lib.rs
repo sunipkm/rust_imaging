@@ -1,3 +1,5 @@
+use ccdi_common::to_string;
+use image::DynamicImage;
 use once_cell::sync::Lazy;
 use std::{
     fmt::Debug,
@@ -12,16 +14,16 @@ use ccdi_imager_interface::{
 
 use log::{info, warn};
 
-use cameraunit_asi::{
-    get_camera_ids, open_camera, CameraInfo, CameraUnit, CameraUnitASI, DynamicSerialImage,
+use cameraunit_fli::{
+    get_camera_ids, open_camera, CameraInfo, CameraUnit, CameraUnitFLI, DynamicSerialImage,
     OptimumExposure, ROI,
 };
 
-pub struct ASICameraDriver {
+pub struct FLICameraDriver {
     opt: Option<OptimumExposure>,
 }
 
-impl ASICameraDriver {
+impl FLICameraDriver {
     pub fn new() -> Self {
         Self { opt: None }
     }
@@ -31,28 +33,23 @@ impl ASICameraDriver {
     }
 }
 
-impl Default for ASICameraDriver {
+impl Default for FLICameraDriver {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl ImagerDriver for ASICameraDriver {
+impl ImagerDriver for FLICameraDriver {
     fn list_devices(&mut self) -> Result<Vec<DeviceDescriptor>, String> {
-        let ids = get_camera_ids();
-        match ids {
-            Some(ids) => {
-                let mut out: Vec<DeviceDescriptor> = Vec::new();
-                for id in ids {
-                    out.push(DeviceDescriptor {
-                        id: id.0,
-                        name: id.1,
-                    });
-                }
-                Ok(out)
-            }
-            None => Ok(Vec::<DeviceDescriptor>::new()),
+        let ids = get_camera_ids().map_err(to_string)?;
+        let mut out: Vec<DeviceDescriptor> = Vec::new();
+        for (id, name) in ids.iter().enumerate() {
+            out.push(DeviceDescriptor {
+                id: id as i32,
+                name: name.clone(),
+            });
         }
+        Ok(out)
     }
 
     fn connect_device(
@@ -60,8 +57,8 @@ impl ImagerDriver for ASICameraDriver {
         descriptor: &DeviceDescriptor,
         roi_request: &ExposureArea,
     ) -> Result<Box<dyn ImagerDevice>, String> {
-        let (cam, _) = open_camera(descriptor.id).map_err(|x| x.to_string())?;
-        Ok(Box::new(ASICameraImager {
+        let (cam, _) = open_camera(&descriptor.name).map_err(to_string)?;
+        Ok(Box::new(FLICameraImager {
             device: cam,
             roi: *roi_request,
             opt: self.opt,
@@ -69,13 +66,20 @@ impl ImagerDriver for ASICameraDriver {
     }
 }
 
-pub struct ASICameraImager {
-    device: CameraUnitASI,
+pub struct FLICameraImager {
+    device: CameraUnitFLI,
     roi: ExposureArea,
     opt: Option<OptimumExposure>,
 }
 
-impl ImagerDevice for ASICameraImager {
+impl ImagerDevice for FLICameraImager {
+    fn read_properties(&mut self) -> Result<ImagerProperties, String> {
+        Ok(ImagerProperties {
+            basic: read_basic_props(&self.device),
+            other: read_all_props(&self.device),
+        })
+    }
+
     fn close(&mut self) {
         self.device
             .cancel_capture()
@@ -87,27 +91,13 @@ impl ImagerDevice for ASICameraImager {
             .expect("May fail");
     }
 
-    fn read_properties(&mut self) -> Result<ImagerProperties, String> {
-        Ok(ImagerProperties {
-            basic: read_basic_props(&self.device),
-            other: read_all_props(&self.device),
-        })
-    }
-
     fn start_exposure(&mut self, params: &ExposureParams) -> Result<(), String> {
         static FIRST_CALL: Lazy<Arc<Mutex<bool>>> = Lazy::new(|| Arc::new(Mutex::new(true)));
-        self.device
-            .set_gain_raw(params.gain as i64)
-            .map_err(|x| x.to_string())?;
         if !params.autoexp {
             self.device
                 .set_exposure(Duration::from_secs_f64(params.time))
                 .map_err(|x| x.to_string())?;
         }
-
-        self.device
-            .set_flip(params.flipx, params.flipy)
-            .map_err(|x| x.to_string())?;
 
         let roi = {
             let mut val = FIRST_CALL.lock().unwrap();
@@ -151,7 +141,7 @@ impl ImagerDevice for ASICameraImager {
         &mut self,
         params: &mut ExposureParams,
     ) -> Result<DynamicSerialImage, String> {
-        let img = self.device.download_image().map_err(|x| x.to_string())?;
+        let mut img = self.device.download_image().map_err(|x| x.to_string())?;
         if params.autoexp & self.opt.is_some() {
             match self.opt.unwrap().calculate(
                 img.into_luma().into_vec(),
@@ -168,22 +158,26 @@ impl ImagerDevice for ASICameraImager {
                         return Err("Autoexposure set exposure failed".to_owned());
                     }
                     params.time = exposure.as_secs_f64();
-                },
+                }
                 Err(e) => {
                     warn!("Autoexposure failed: {}", e);
-                },
+                }
             }
         }
-        // if params.flipx || params.flipy {
-        //     let mut bimg = img.get_image_mut().clone();
-        //     if params.flipx {
-        //         bimg = bimg.fliph();
-        //     }
-        //     if params.flipy {
-        //         bimg = bimg.flipv();
-        //     }
-        //     img = ImageData::new(bimg.clone(), img.get_metadata().clone());
-        // }
+        if params.flipx || params.flipy {
+            let meta = img.get_metadata().clone();
+            let mut bimg = DynamicImage::from(img);
+            if params.flipx {
+                bimg = bimg.fliph();
+            }
+            if params.flipy {
+                bimg = bimg.flipv();
+            }
+            img = DynamicSerialImage::from(bimg);
+            if let Some(meta) = meta {
+                img.set_metadata(meta);
+            }
+        }
         if let Some(meta) = img.get_metadata() {
             params.area.x = meta.img_left as usize;
             params.area.y = meta.img_top as usize;
@@ -202,7 +196,7 @@ impl ImagerDevice for ASICameraImager {
     }
 }
 
-fn read_basic_props(device: &CameraUnitASI) -> BasicProperties {
+fn read_basic_props(device: &CameraUnitFLI) -> BasicProperties {
     let roi = device.get_roi();
     BasicProperties {
         width: device.get_ccd_width() as usize,
@@ -218,14 +212,13 @@ fn read_basic_props(device: &CameraUnitASI) -> BasicProperties {
     }
 }
 
-fn read_all_props(device: &CameraUnitASI) -> Vec<DeviceProperty> {
+fn read_all_props(device: &CameraUnitFLI) -> Vec<DeviceProperty> {
     vec![
         prop_f32(
             "Chip Temperature",
             device.get_temperature().unwrap_or(-273.0),
             1,
         ),
-        prop("ADC Gain", device.get_gain_raw()),
         prop("Camera ID", device.get_uuid()),
         prop_f32(
             "Min Exposure Time",
@@ -243,7 +236,6 @@ fn read_all_props(device: &CameraUnitASI) -> Vec<DeviceProperty> {
                 .as_secs_f32(),
             3,
         ),
-        prop("Max ADC Gain", device.get_max_gain().unwrap_or(0)),
     ]
 }
 

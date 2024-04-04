@@ -16,7 +16,7 @@ use ccdi_logic::start_logic_thread;
 use ccdi_logic::start_process_thread;
 use ccdi_logic::start_storage_thread;
 use ccdi_logic::LogicParams;
-use config::ServiceConfig;
+use config::ServerConfig;
 use log::debug;
 use log::{error, info};
 use logger::init_logger;
@@ -33,11 +33,11 @@ use websocket::start_single_async_to_multiple_clients_sender;
 // ============================================ PUBLIC =============================================
 
 fn main() {
-    let config: ServiceConfig = argh::from_env();
-    init_logger(config.debug, config.log.as_ref());
+    let serverconf: ServerConfig = argh::from_env();
+    init_logger(serverconf.debug, serverconf.log.as_ref());
 
     let params = LogicParams {
-        demo_mode: config.demo,
+        demo_mode: serverconf.camera,
     };
 
     match create_default_config_file() {
@@ -82,12 +82,13 @@ fn main() {
         .enable_all()
         .build()
         .expect("Tokio failed to start")
-        .block_on(tokio_main(server_tx, clients_rx))
+        .block_on(tokio_main(server_tx, clients_rx, serverconf.addr))
 }
 
 async fn tokio_main(
     sync_server_tx: std::sync::mpsc::Sender<StateMessage>,
     sync_clients_rx: std::sync::mpsc::Receiver<ClientMessage>,
+    addr: u16,
 ) {
     let (ws_from_client_tx, ws_from_client_rx) = mpsc::unbounded_channel::<StateMessage>();
     let (async_clients_tx, async_clients_rx) = mpsc::unbounded_channel::<ClientMessage>();
@@ -103,5 +104,5 @@ async fn tokio_main(
 
     let routes = warp::get().and(websocket_service.or(static_files_rules()));
 
-    warp::serve(routes).run(([0, 0, 0, 0], 8081)).await;
+    warp::serve(routes).run(([0, 0, 0, 0], addr)).await;
 }

@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-serialimage = "3.0.0"
+serialimage = "4.0"
 serde = "1"
 serde_derive = "1"

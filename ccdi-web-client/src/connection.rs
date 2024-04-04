@@ -61,8 +61,10 @@ impl Component for ConnectionService {
             Msg::Connect => {
                 let hostname = gloo::utils::window().location().hostname().ok()
                     .unwrap_or(String::from("localhost"));
+                let addr = gloo::utils::window().location().port().ok()
+                    .unwrap_or(String::from("8081"));
 
-                let ws_url = format!("ws://{}:8081/ccdi", hostname);
+                let ws_url = format!("ws://{hostname}:{addr}/ccdi");
 
                 console::info!(&hostname, "WS: ", &ws_url);
                 let callback = ctx.link().callback(|data: WebsocketMessage| Msg::DataReceived(data));

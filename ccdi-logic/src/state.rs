@@ -15,7 +15,7 @@ pub struct BackendState {
 
 impl BackendState {
     pub fn new(
-        demo_mode: bool,
+        demo_mode: &str,
         process_tx: Sender<ProcessMessage>,
         storage_tx: Sender<StorageMessage>,
         config: Arc<ServiceConfig>,
@@ -23,12 +23,17 @@ impl BackendState {
         Self {
             camera: CameraController::new(
                 match demo_mode {
-                    false => {
+                    "asi" => {
                         let mut drv = ccdi_imager_asicam::ASICameraDriver::new();
                         drv.update_opt_config(config.exp.get_optimum_exp_config().unwrap());
                         Box::new(drv)
+                    },
+                    "fli" => {
+                        let mut drv = ccdi_imager_fli::FLICameraDriver::new();
+                        drv.update_opt_config(config.exp.get_optimum_exp_config().unwrap());
+                        Box::new(drv)
                     }
-                    true => Box::new(ccdi_imager_demo::DemoImagerDriver::new()),
+                    _ => Box::new(ccdi_imager_demo::DemoImagerDriver::new()),
                 },
                 process_tx,
                 storage_tx,

@@ -1,5 +1,5 @@
 use std::{path::{Path, PathBuf}, sync::Arc, time::Duration};
-use cameraunit::OptimumExposureConfig;
+use cameraunit::{OptimumExposure, OptimumExposureBuilder};
 use ccdi_imager_interface::ExposureArea;
 use log::info;
 use nanocv::ImgSize;
@@ -33,16 +33,17 @@ pub struct OptExposureConfig {
 }
 
 impl OptExposureConfig {
-    pub fn get_optimum_exp_config(&self) -> Option<OptimumExposureConfig> {
-        OptimumExposureConfig::new(
-            self.percentile_pix,
-            self.pixel_tgt,
-            self.pixel_tol,
-            self.pixel_exclusion,
-            self.min_exopsure,
-            self.max_exposure,
-            self.max_bin,
-        )
+    pub fn get_optimum_exp_config(&self) -> Option<OptimumExposure> {
+        OptimumExposureBuilder::default()
+        .percentile_pix(self.percentile_pix)
+        .pixel_tgt(self.pixel_tgt)
+        .pixel_uncertainty(self.pixel_tol)
+        .pixel_exclusion(self.pixel_exclusion)
+        .min_allowed_exp(self.min_exopsure)
+        .max_allowed_exp(self.max_exposure)
+        .max_allowed_bin(self.max_bin)
+        .build()
+        .ok()
     }
 }
 
