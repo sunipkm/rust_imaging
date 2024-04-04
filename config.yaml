@@ -1,5 +1,8 @@
 storage: ~/storage/
 turn_off_command: ''
+savecadence:
+  secs: 0
+  nanos: 0
 render_size:
   x: 900
   y: 600

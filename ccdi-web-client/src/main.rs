@@ -8,7 +8,6 @@ use std::sync::{Arc, Mutex};
 
 use ccdi_common::*;
 use ccdi_imager_interface::ExposureArea;
-use components::shooting_details::ShootingDetails;
 use connection::ConnectionService;
 use gloo::console;
 
@@ -180,7 +179,7 @@ impl Main {
         let client_test_message = ctx.link().callback(move |_| {
             // Possibly correct example of how to send a message to the server. ~Mit
             info!("Sending test message to server.");
-            Msg::SendMessage(StateMessage::ClientInformation("Hello, server!".to_string()))
+            Msg::SendMessage(StateMessage::ClientInformation(("Hello".to_owned(), "Hello, server!".to_string())))
         });
 
         let time_changed_btn = ctx.link().callback(move |_| {
@@ -380,12 +379,8 @@ impl Main {
                 <ShootingDetail
                     on_action={action.clone()}
                     storage_details={self.view_state.storage_detail.clone()}
-                />
-
-                <CompositionDetail
-                    on_action={action}
-                    camera_params={self.view_state.camera_params.clone()}
                     image_params={self.view_state.image_params.clone()}
+                    camera_params={self.view_state.camera_params.clone()}
                 />
             </div>
         }
@@ -402,18 +397,16 @@ impl Main {
     }
 
     fn render_main(&self) -> Html {
-        match self.selected_menu {
-            MenuItem::Shoot => html! {
-                <ShootingDetails storage_details={self.view_state.storage_detail.clone()} />
-            },
-            _ => html! {
+        // match self.selected_menu {
+            // _ => 
+            html! {
                 <Picture
                     image={self.image.clone()}
                     hist_width={self.view_state.config.histogram_width}
                     hist_height={self.view_state.config.histogram_height}
                     onresize={|val| log_1(&format!("Resized: {:?}", val).into())} // TODO: Tap into this callback to do things, may be communicate to server to send a lower res image? Handle histogram on server to lower load/traffic? RgbImage must be changed: It is sending TOO MUCH data (3x for mono images)
                 />
-            },
+            // },
         }
     }
 }

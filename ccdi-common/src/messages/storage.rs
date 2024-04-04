@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use serde_derive::{Serialize, Deserialize};
 
@@ -10,6 +10,7 @@ use crate::{RawImage, StorageState};
 pub enum StorageMessage {
     EnableStore,
     DisableStore,
+    UpdateCadence(Duration),
     ProcessImage(Arc<RawImage>),
     SetDirectory(String),
 }
@@ -17,6 +18,7 @@ pub enum StorageMessage {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct StorageDetail {
     pub storage_name: String,
+    pub cadence: Duration,
     pub counter: usize,
     pub storage_log: Vec<StorageLogRecord>,
     pub storage_enabled: bool,
@@ -39,6 +41,7 @@ impl Default for StorageDetail {
     fn default() -> Self {
         Self {
             storage_name: String::from("?"),
+            cadence: Duration::from_secs(60),
             counter: 0,
             storage_log: Vec::new(),
             storage_enabled: false,

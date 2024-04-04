@@ -1,4 +1,10 @@
-use std::{collections::VecDeque, path::PathBuf, process::Command, sync::Arc};
+use std::{
+    collections::VecDeque,
+    path::PathBuf,
+    process::Command,
+    sync::Arc,
+    time::{Duration, SystemTime},
+};
 
 use ccdi_common::{
     to_string, RawImage, StateMessage, StorageCapacity, StorageDetail, StorageLogRecord,
@@ -17,6 +23,8 @@ mod save;
 
 pub struct Storage {
     config: Arc<ServiceConfig>,
+    savecadence: Duration,
+    last_save: Option<SystemTime>,
     last_storage_state: StorageState,
     counter: usize,
     storage_name: String,
@@ -26,8 +34,11 @@ pub struct Storage {
 
 impl Storage {
     pub fn new(config: Arc<ServiceConfig>) -> Self {
+        let dur = config.savecadence;
         Self {
             config,
+            savecadence: dur,
+            last_save: None,
             last_storage_state: StorageState::Unknown,
             counter: 0,
             storage_name: String::from("default"),
@@ -39,20 +50,33 @@ impl Storage {
     pub fn process(&mut self, message: StorageMessage) -> Result<Vec<StateMessage>, String> {
         match message {
             StorageMessage::SetDirectory(name) => {
-                //
                 self.storage_name = name;
                 self.counter = 0;
             }
             StorageMessage::DisableStore => {
                 debug!("Storage disabled");
                 self.storage_active = false;
+                self.last_save = None;
             }
             StorageMessage::EnableStore => {
                 debug!("Storage enabled");
                 self.storage_active = true;
             }
+            StorageMessage::UpdateCadence(dur) => {
+                debug!("Storage cadence updated to {:?}", dur);
+                self.savecadence = dur;
+            }
             StorageMessage::ProcessImage(image) => {
                 if self.storage_active {
+                    if self.last_save.is_none() {
+                        self.last_save = Some(SystemTime::now());
+                    } else {
+                        let elapsed = self.last_save.unwrap().elapsed().unwrap();
+                        if elapsed < self.savecadence {
+                            return Ok(vec![]);
+                        }
+                        self.last_save = Some(SystemTime::now());
+                    }
                     self.handle_image(image);
                 }
             }
@@ -91,6 +115,7 @@ impl Storage {
     fn get_details(&self) -> StorageDetail {
         StorageDetail {
             storage_name: self.storage_name.clone(),
+            cadence: self.savecadence,
             counter: self.counter,
             storage_log: self.details.iter().cloned().collect(),
             storage_enabled: self.storage_active,

@@ -13,6 +13,7 @@ use directories::ProjectDirs;
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct ServiceConfig {
     pub storage: String,
+    pub savecadence: Duration,
     pub turn_off_command: String,
     pub render_size: ImgSize,
     pub roi: ExposureArea,
@@ -51,7 +52,8 @@ impl Default for ServiceConfig {
     fn default() -> Self {
         Self {
             storage: String::from("~/storage/"),
-            render_size: ImgSize::new(900, 600),
+            savecadence: Duration::from_secs(10),
+            render_size: ImgSize::new(1024, 1024),
             roi: ExposureArea { x: 0, y: 0, width: 0, height: 0 },
             exp: Default::default(),
             gui: Default::default(),

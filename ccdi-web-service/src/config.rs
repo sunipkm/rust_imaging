@@ -3,7 +3,7 @@ use argh::FromArgs;
 // ============================================ PUBLIC =============================================
 
 #[derive(FromArgs)]
-/// CCD imaging service
+/// CCD Imaging Service
 pub struct ServerConfig {
     /// run with a demo driver
     #[argh(option, default = "String::from(\"asi\")")]

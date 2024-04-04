@@ -1,5 +1,6 @@
-use yew::Properties;
 use super::*;
+use crate::selectors::rawhtml::SafeHtml;
+use yew::{html_nested, Properties};
 
 // ============================================ PUBLIC =============================================
 
@@ -23,7 +24,7 @@ impl Component for ShootingDetails {
     fn view(&self, ctx: &Context<Self>) -> Html {
         let details = &ctx.props().storage_details;
 
-        html!{
+        html! {
             <div class="div-table w100p">
                 {render_detail_rows(details)}
             </div>
@@ -34,18 +35,30 @@ impl Component for ShootingDetails {
 // =========================================== PRIVATE =============================================
 
 fn render_detail_rows(properties: &StorageDetail) -> Html {
-    properties.storage_log.iter().map(render_item).collect::<Html>()
+    properties
+        .storage_log
+        .iter()
+        .map(render_item)
+        .collect::<Html>()
 }
 
 fn render_item(property: &StorageLogRecord) -> Html {
-    render_row(&property.name, &format!("{:?}", &property.status))
-}
-
-fn render_row(name: &str, value: &str) -> Html {
+    let name = property.name.rsplit('/').next().unwrap_or_default();
     html! {
         <div class="div-table-row w100p">
-            <div class="div-table-col w60p">{name}</div>
-            <div class="div-table-col w39p">{value}</div>
+        <div class="div-table-col w5p">
+        <SafeHtml html={
+            match &property.status {
+                StorageLogStatus::Success => "✅".to_owned(),
+                StorageLogStatus::Error(error) => {
+                    html_nested! {format!("<div class='tooltip'> ❌
+                    <span class='tooltiptext'>{error}</span>
+                    </div>")}
+                },
+            }
+        }/>
+        </div>
+        <div class="div-table-col w90p">{name}</div>
         </div>
     }
 }

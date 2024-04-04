@@ -23,6 +23,8 @@ ccdi-imager-interface = { path = "../ccdi-imager-interface" }
 once_cell = "1.18.0"
 log = "0.4.21"
 
+gloo-utils = "0.2"
+
 [dependencies.uuid]
 version = "1.8.0"
 features = [

@@ -50,15 +50,15 @@ impl BackendState {
 
         Ok(match message {
             ClientInformation(info) => {
+                let (kind, msg) = info;
                 // Do something with the information.
-                info!("Client information received: {:?}", info);
+                info!("Client information received: {kind} -> {msg}");
                 self.return_view() // ?
             }
             ImageDisplayed(image) => {
                 self.image = Some(image);
                 BackendResult::empty()
             }
-            // TODO: ImageParam?
             CameraParam(message) => {
                 let heating = match message {
                     ccdi_common::CameraParamMessage::SetHeatingPwm(value) => Some(value),

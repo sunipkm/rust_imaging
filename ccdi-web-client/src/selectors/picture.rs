@@ -120,45 +120,45 @@ impl Component for Picture {
     }
 }
 
-fn function_button(
-    ctx: &Context<Picture>,
-    current_function: TransformFunction,
-    button_function: TransformFunction,
-    text: &str,
-) -> Html {
-    let function_click =
-        |value: TransformFunction| ctx.link().callback(move |_| Msg::ChangeFunction(value));
+// fn function_button(
+//     ctx: &Context<Picture>,
+//     current_function: TransformFunction,
+//     button_function: TransformFunction,
+//     text: &str,
+// ) -> Html {
+//     let function_click =
+//         |value: TransformFunction| ctx.link().callback(move |_| Msg::ChangeFunction(value));
 
-    let selected_class = match current_function == button_function {
-        true => Some("button-selected"),
-        false => None,
-    };
+//     let selected_class = match current_function == button_function {
+//         true => Some("button-selected"),
+//         false => None,
+//     };
 
-    html! {
-        <button
-            class={classes!("short-button", selected_class)}
-            onclick={function_click(button_function)}
-        >{ text }</button>
-    }
-}
+//     html! {
+//         <button
+//             class={classes!("short-button", selected_class)}
+//             onclick={function_click(button_function)}
+//         >{ text }</button>
+//     }
+// }
 
-fn gain_button(ctx: &Context<Picture>, current_gain: i32, button_gain: i32) -> Html {
-    let gain_click = |value: i32| ctx.link().callback(move |_| Msg::ChangeGain(value));
+// fn gain_button(ctx: &Context<Picture>, current_gain: i32, button_gain: i32) -> Html {
+//     let gain_click = |value: i32| ctx.link().callback(move |_| Msg::ChangeGain(value));
 
-    let selected_class = match current_gain == button_gain {
-        true => Some("button-selected"),
-        false => None,
-    };
+//     let selected_class = match current_gain == button_gain {
+//         true => Some("button-selected"),
+//         false => None,
+//     };
 
-    html! {
-        <button
-            class={classes!("short-button", selected_class)}
-            onclick={gain_click(button_gain)}
-        >{
-            format!("X {}", button_gain)
-        }</button>
-    }
-}
+//     html! {
+//         <button
+//             class={classes!("short-button", selected_class)}
+//             onclick={gain_click(button_gain)}
+//         >{
+//             format!("X {}", button_gain)
+//         }</button>
+//     }
+// }
 
 fn encoded_image_to_html(image: Option<&Vec<u8>>) -> Html {
     match image.and_then(png_to_base64) {
