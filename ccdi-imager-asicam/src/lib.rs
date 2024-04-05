@@ -94,6 +94,10 @@ impl ImagerDevice for ASICameraImager {
         })
     }
 
+    fn update_opt_config(&mut self, config: OptimumExposure) {
+        self.opt = Some(config);
+    }
+
     fn start_exposure(&mut self, params: &ExposureParams) -> Result<(), String> {
         static FIRST_CALL: Lazy<Arc<Mutex<bool>>> = Lazy::new(|| Arc::new(Mutex::new(true)));
         self.device
@@ -199,6 +203,10 @@ impl ImagerDevice for ASICameraImager {
             .set_temperature(request.temperature)
             .map_err(|x| x.to_string())?;
         Ok(())
+    }
+    
+    fn cancel_capture(&mut self) -> Result<(), String> {
+        self.device.cancel_capture().map_err(|x| x.to_string())
     }
 }
 

@@ -1,6 +1,6 @@
 use std::{cmp::min, fmt::Debug, time::SystemTime};
 
-use cameraunit::DynamicSerialImage;
+use cameraunit::{DynamicSerialImage, OptimumExposure};
 pub use cameraunit::{ImageMetaData, SerialImageBuffer};
 use ccdi_imager_interface::{
     BasicProperties, DeviceDescriptor, DeviceProperty, ExposureArea, ExposureParams, ImagerDevice,
@@ -43,6 +43,7 @@ impl ImagerDriver for DemoImagerDriver {
             temperature: 30.0,
         }))
     }
+
 }
 
 pub struct DemoImagerDevice {
@@ -51,6 +52,7 @@ pub struct DemoImagerDevice {
 }
 
 impl ImagerDevice for DemoImagerDevice {
+    fn update_opt_config(&mut self, _config: OptimumExposure) {}
     fn read_properties(&mut self) -> Result<ImagerProperties, String> {
         self.offset += 0.001;
         Ok(ImagerProperties {
@@ -80,7 +82,10 @@ impl ImagerDevice for DemoImagerDevice {
         Ok(true)
     }
 
-    fn download_image(&mut self, params: &mut ExposureParams) -> Result<DynamicSerialImage, String> {
+    fn download_image(
+        &mut self,
+        params: &mut ExposureParams,
+    ) -> Result<DynamicSerialImage, String> {
         let data = generate_test_image(params.area.width, params.area.height);
         let mut img = DynamicImage::from(ImageBuffer::<image::Luma<u16>, Vec<u16>>::new(
             params.area.width as u32,
@@ -102,6 +107,10 @@ impl ImagerDevice for DemoImagerDevice {
     fn set_temperature(&mut self, request: TemperatureRequest) -> Result<(), String> {
         dbg!("Setting temperature: ", request.temperature, request.speed);
         self.temperature = request.temperature;
+        Ok(())
+    }
+    
+    fn cancel_capture(&mut self) -> Result<(), String> {
         Ok(())
     }
 }

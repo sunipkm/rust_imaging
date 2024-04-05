@@ -1,11 +1,15 @@
-use serde_derive::{Serialize, Deserialize};
-use serialimage::DynamicSerialImage;
+use serde_derive::{Deserialize, Serialize};
+use serialimage::{DynamicSerialImage, OptimumExposure};
 
 // ============================================ PUBLIC =============================================
 
 pub trait ImagerDriver {
     fn list_devices(&mut self) -> Result<Vec<DeviceDescriptor>, String>;
-    fn connect_device(&mut self, descriptor: &DeviceDescriptor, roi_request: &ExposureArea) -> Result<Box<dyn ImagerDevice>, String>;
+    fn connect_device(
+        &mut self,
+        descriptor: &DeviceDescriptor,
+        roi_request: &ExposureArea,
+    ) -> Result<Box<dyn ImagerDevice>, String>;
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -18,9 +22,12 @@ pub trait ImagerDevice {
     fn read_properties(&mut self) -> Result<ImagerProperties, String>;
     fn close(&mut self);
     fn start_exposure(&mut self, params: &ExposureParams) -> Result<(), String>;
-    fn image_ready(&mut self, ) -> Result<bool, String>;
-    fn download_image(&mut self, params: &mut ExposureParams) -> Result<DynamicSerialImage, String>;
+    fn image_ready(&mut self) -> Result<bool, String>;
+    fn download_image(&mut self, params: &mut ExposureParams)
+    -> Result<DynamicSerialImage, String>;
     fn set_temperature(&mut self, request: TemperatureRequest) -> Result<(), String>;
+    fn update_opt_config(&mut self, config: OptimumExposure);
+    fn cancel_capture(&mut self) -> Result<(), String>;
 }
 
 #[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -71,12 +78,12 @@ pub struct ExposureArea {
     pub x: usize,
     pub y: usize,
     pub width: usize,
-    pub height: usize
+    pub height: usize,
 }
 
 impl ExposureArea {
     pub fn pixel_count(&self) -> usize {
-        self.width*self.height
+        self.width * self.height
     }
 
     pub fn into_tuple(&self) -> (usize, usize, usize, usize) {

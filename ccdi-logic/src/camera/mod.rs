@@ -168,7 +168,7 @@ impl CameraController {
             SetAutoExp(value) => {
                 info!("Autoexposure: {}", value);
                 self.camera_params.autoexp = value;
-            }
+            },
             // SetFlipX(value) => self.camera_params.flipx = value,
             // SetFlipY(value) => self.camera_params.flipy = value,
             // SetPercentilePix(value) => self.camera_params.percentile_pix = value,

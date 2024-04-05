@@ -73,6 +73,10 @@ pub struct FLICameraImager {
 }
 
 impl ImagerDevice for FLICameraImager {
+    fn update_opt_config(&mut self, config: OptimumExposure) {
+        self.opt = Some(config);
+    }
+    
     fn read_properties(&mut self) -> Result<ImagerProperties, String> {
         Ok(ImagerProperties {
             basic: read_basic_props(&self.device),
@@ -184,6 +188,10 @@ impl ImagerDevice for FLICameraImager {
             .set_temperature(request.temperature)
             .map_err(|x| x.to_string())?;
         Ok(())
+    }
+    
+    fn cancel_capture(&mut self) -> Result<(), String> {
+        self.device.cancel_capture().map_err(|x| x.to_string())
     }
 }
 

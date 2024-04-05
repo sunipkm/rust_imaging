@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{StorageDetail, StorageMessage, StorageState};
+use crate::{OptExposureConfig, StorageDetail, StorageMessage, StorageState};
 
 // ============================================ PUBLIC =============================================
 
@@ -24,6 +24,8 @@ pub enum StateMessage {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum ExposureCommand {
     Start,
+    Update(OptExposureConfig),
+    Cancel,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

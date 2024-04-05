@@ -3,9 +3,10 @@ use std::{
     sync::{mpsc::Sender, Arc},
 };
 
+use cameraunit::OptimumExposureBuilder;
 use ccdi_common::{
-    log_err, ImageParams, CameraParams, ClientMessage, ConvertRawImage, ExposureCommand, ProcessMessage,
-    RawImage, StorageMessage,
+    log_err, CameraParams, ClientMessage, ConvertRawImage, ExposureCommand, ImageParams,
+    OptExposureConfig, ProcessMessage, RawImage, StorageMessage,
 };
 use ccdi_imager_interface::{BasicProperties, ExposureArea, ExposureParams, ImagerDevice};
 use log::debug;
@@ -68,7 +69,10 @@ impl ExposureController {
             }
         }
 
-        if !self.exposure_active() && self.camera_params.loop_enabled && (self.trigger_active || !self.camera_params.trigger_required) {
+        if !self.exposure_active()
+            && self.camera_params.loop_enabled
+            && (self.trigger_active || !self.camera_params.trigger_required)
+        {
             self.start_exposure(device)?;
         }
 
@@ -90,6 +94,12 @@ impl ExposureController {
     ) -> Result<(), String> {
         match command {
             ExposureCommand::Start => self.start_exposure(device)?,
+            ExposureCommand::Update(params) => {
+                self.update_exposure_conf(device, params)?
+            }
+            ExposureCommand::Cancel => {
+                device.cancel_capture()?;
+            }
         };
         Ok(())
     }
@@ -112,12 +122,9 @@ impl ExposureController {
         // Package and send a message instructing the system to save the Raw image. ~Mit
         let message = StorageMessage::ProcessImage(image.clone());
         log_err("Self process message", self.storage_tx.send(message));
-        
+
         // Package and send a message to convert the RawImage into something stupid. ~Mit
-        let message = ProcessMessage::ConvertRawImage(ConvertRawImage {
-            image,
-            size,
-        });
+        let message = ProcessMessage::ConvertRawImage(ConvertRawImage { image, size });
         log_err("Self process message", self.process_tx.send(message));
     }
 
@@ -136,6 +143,25 @@ impl ExposureController {
 
         debug!("Exposure started");
         result
+    }
+
+    fn update_exposure_conf(
+        &mut self,
+        device: &mut dyn ImagerDevice,
+        config: OptExposureConfig,
+    ) -> Result<(), String> {
+        let config = OptimumExposureBuilder::default()
+            .percentile_pix(config.percentile_pix)
+            .pixel_tgt(config.pixel_tgt)
+            .pixel_uncertainty(config.pixel_tol)
+            .min_allowed_exp(config.min_exopsure)
+            .max_allowed_exp(config.max_exposure)
+            .max_allowed_bin(config.max_bin)
+            .build()
+            .map_err(|e| e.to_string())?;
+
+        device.update_opt_config(config);
+        Ok(())
     }
 
     fn make_exposure_description(&mut self) -> ExposureParams {
@@ -158,8 +184,8 @@ impl ExposureController {
 
         self.image_params.x = x as u16;
         self.image_params.y = y as u16;
-        self.image_params.w = w    as u16;
-        self.image_params.h = h   as u16;
+        self.image_params.w = w as u16;
+        self.image_params.h = h as u16;
 
         ExposureParams {
             gain: self.camera_params.gain,
