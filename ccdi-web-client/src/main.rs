@@ -3,8 +3,8 @@ mod connection;
 mod selectors;
 
 use once_cell::sync::Lazy;
-use web_sys::console::log_1;
 use std::sync::{Arc, Mutex};
+use web_sys::console::log_1;
 
 use ccdi_common::*;
 use ccdi_imager_interface::ExposureArea;
@@ -22,11 +22,13 @@ use selectors::composition::CompositionDetail;
 use selectors::picture::Picture;
 
 use crate::components::system::System;
+use crate::selectors::autoexp::AutoExpConfig;
 use crate::selectors::bool::BoolSelector;
 use crate::selectors::float::FloatSelector;
 use crate::selectors::floatin::FloatInput;
 use crate::selectors::shooting::ShootingDetail;
 use crate::selectors::usize::UsizeInput;
+// use crate::selectors::autoexp::AutoExpSelector;
 
 use log::info;
 
@@ -46,13 +48,8 @@ pub enum UserAction {
     MenuClick(MenuItem),
 }
 
-struct RoundSize {
-    width: usize,
-    height: usize,
-}
-
 pub struct Main {
-    pub image: Option<Arc<Vec<u8>>>, // TODO: Change this to a smaller image type, e.g. DynamicSerialImage
+    pub image: Option<Arc<Vec<u8>>>, // PNG Image data
     pub view_state: ViewState,
     pub connection_state: ConnectionState,
     pub connection_context: Option<Scope<ConnectionService>>,
@@ -72,7 +69,7 @@ impl Main {
             ClientMessage::View(view) => self.view_state = *view,
             ClientMessage::PngImage(image) => self.image = Some(image),
         }
-        
+
         true
     }
 
@@ -89,18 +86,15 @@ impl Main {
     }
 
     fn render_composition(&self, ctx: &Context<Self>) -> Html {
-        static FIRST_CALL: Lazy<Arc<Mutex<bool>>> = Lazy::new(|| Arc::new(Mutex::new(true)));
+        static LAST_CALL_CAMERA: Lazy<Arc<Mutex<bool>>> = Lazy::new(|| Arc::new(Mutex::new(false)));
         let action = ctx
             .link()
             .callback(|action: StateMessage| Msg::SendMessage(action));
 
-        let gain_changed = ctx
-            .link()
-            .callback(|gain: f64| Msg::CParamUpdate(CameraParamMessage::SetGain(gain as u16)));
-
-        let time_changed = ctx
-            .link()
-            .callback(|time: f64| Msg::CParamUpdate(CameraParamMessage::SetTime(time)));
+        let gain_changed = ctx.link().callback(|gain: String| {
+            let gain = gain.parse::<f64>().unwrap_or(200.0);
+            Msg::CParamUpdate(CameraParamMessage::SetGain(gain as u16))
+        });
 
         let autoexp_changed = ctx
             .link()
@@ -120,27 +114,16 @@ impl Main {
         let h = self.h.clone();
 
         {
-            let mut cond = FIRST_CALL.lock().unwrap();
-            if *cond {
-                let roi = self
-                    .view_state
-                    .camera_properties
-                    .clone()
-                    .map(|prop| prop.basic.roi)
-                    .unwrap_or(ExposureArea {
-                        x: 0,
-                        y: 0,
-                        width: 0,
-                        height: 0,
-                    });
-
-                *x.lock().unwrap() = roi.x;
-                *y.lock().unwrap() = roi.y;
-                *w.lock().unwrap() = roi.width;
-                *h.lock().unwrap() = roi.height;
-
-                *cond = false;
+            let cond = self.view_state.status.camera == ConnectionState::Established;
+            let mut last_cond = LAST_CALL_CAMERA.lock().unwrap();
+            if cond && !*last_cond
+            {
+                *x.lock().unwrap() = self.view_state.image_params.x as usize;
+                *y.lock().unwrap() = self.view_state.image_params.y as usize;
+                *w.lock().unwrap() = self.view_state.image_params.w as usize;
+                *h.lock().unwrap() = self.view_state.image_params.h as usize;
             }
+            *last_cond = cond;
         }
 
         let x_ = self.x.clone();
@@ -148,8 +131,8 @@ impl Main {
         let w_ = self.w.clone();
         let h_ = self.h.clone();
 
-        let t = self.time.clone();
-        let t_ = self.time.clone();
+        let time_cb = self.time.clone();
+        let time = self.time.clone();
 
         let xp = self.x.clone();
         let yp = self.y.clone();
@@ -163,8 +146,12 @@ impl Main {
                 *w_.clone().lock().unwrap(),
                 *h_.clone().lock().unwrap(),
             );
-            *FIRST_CALL.clone().lock().unwrap() = true;
-            let value = (value.0 as u16, value.1 as u16, value.2 as u16, value.3 as u16);
+            let value = (
+                value.0 as u16,
+                value.1 as u16,
+                value.2 as u16,
+                value.3 as u16,
+            );
             Msg::IParamUpdate(ImageParamMessage::SetRoi(value))
         });
 
@@ -174,16 +161,19 @@ impl Main {
             .clone()
             .map(|prop| prop.basic.exposure)
             .unwrap_or(0 as f32);
-        
+
         // Callback called when we press the "Send Test Message" HTML button. ~Mit
         let client_test_message = ctx.link().callback(move |_| {
             // Possibly correct example of how to send a message to the server. ~Mit
             info!("Sending test message to server.");
-            Msg::SendMessage(StateMessage::ClientInformation(("Hello".to_owned(), "Hello, server!".to_string())))
+            Msg::SendMessage(StateMessage::ClientInformation((
+                "Hello".to_owned(),
+                "Hello, server!".to_string(),
+            )))
         });
 
         let time_changed_btn = ctx.link().callback(move |_| {
-            let mut val = t.lock().unwrap();
+            let mut val = time_cb.lock().unwrap();
             let value = val.parse::<f64>();
             if let Ok(value) = value {
                 if !(0.0..=3600.0).contains(&value) {
@@ -226,21 +216,6 @@ impl Main {
             }
         };
 
-        let csize = {
-            if let Some(prop) = &self.view_state.camera_properties {
-                let (width, height) = (prop.basic.width, prop.basic.height);
-                RoundSize {
-                    width: width.to_string().len(),
-                    height: height.to_string().len(),
-                }
-            } else {
-                RoundSize {
-                    width: 1,
-                    height: 1,
-                }
-            }
-        };
-
         html! {
             <div>
                 <BoolSelector
@@ -268,64 +243,80 @@ impl Main {
                         </div>
                     </div>
                     <br/>
-                    <p> {"Origin: X "}
+                    <p> {"Origin:"}
+                    <div class="div-table-row w100p">
+                        <div class="div-table-col w5p"> {"X:"} </div>
+                        <div class="div-table-col w40p">
                         <UsizeInput
                             value={*x.lock().unwrap()}
-                            width={csize.width}
                             on_change={move |value| {*x.lock().unwrap() = value}}
                         />
-                        {" Y "}
+                        </div>
+                        <div class="div-table-col w5p"> {"Y:"} </div>
+                        <div class="div-table-col w40p">
                         <UsizeInput
-                        value={*y.lock().unwrap()}
-                        width={csize.height}
-                        on_change={move |value| {*y.lock().unwrap() = value}}
+                            value={*y.lock().unwrap()}
+                            on_change={move |value| {*y.lock().unwrap() = value}}
                         />
+                        </div>
+                    </div> // div-table-row w100p
                     </p>
                     <p> {"Size: "}
+                    <div class="div-table-row w100p">
+                    <div class="div-table-col w40p">
                         <UsizeInput
-                        value={*w.lock().unwrap()}
-                        width={csize.width}
-                        on_change={move |value| {*w.lock().unwrap() = value}}
+                            value={*w.lock().unwrap()}
+                            on_change={move |value| {*w.lock().unwrap() = value}}
                         />
-                        {" x "}
+                    </div>
+                    <div class="div-table-col w5p"> {"×"} </div>
+                    <div class="div-table-col w40p">
                         <UsizeInput
-                        value={*h.lock().unwrap()}
-                        width={csize.height}
-                        on_change={move |value| {*h.lock().unwrap() = value}}
+                            value={*h.lock().unwrap()}
+                            on_change={move |value| {*h.lock().unwrap() = value}}
                         />
+                    </div>
+                    </div> // div-table-row w100p
                     </p>
 
                     <button onclick={roi_changed}>{"Update ROI"}</button>
                     <button onclick={refresh_roi}>{"Refresh ROI"}</button>
                     </div>
-                    <FloatSelector
-                    name="Set camera gain"
-                    config={self.view_state.config.gain.clone()}
-                    selected_value={self.view_state.camera_params.gain as f64}
-                    value_changed={gain_changed}
-                    />
-                    <FloatSelector
-                    name="Set camera exposure time"
-                    config={self.view_state.config.exposure.clone()}
-                    selected_value={self.view_state.camera_params.time}
-                    value_changed={time_changed}
-                    />
                     <p>
-                    {"Exposure Time: "}
-                    <FloatInput
-                    value={(*t_.lock().unwrap()).clone()}
-                    width = 10
-                    on_change={move |value: String| {
-                        *t_.lock().unwrap() = value;
-                    }}
-                    />
+                    <div class="div-table-row w100p">
+                    <div class="div-table-col w30p"> {"Exposure"} </div>
+                    <div class="div-table-col w50p">
+                        <FloatInput
+                            value={(*time.lock().unwrap()).clone()}
+                            range={None}
+                            on_change={move |value: String| {
+                                *time.lock().unwrap() = value;
+                            }}
+                        />
+                    </div>
+                    <div class="div-table-col w5p"> {"s"} </div>
+                    </div> // div-table-row w100p
+                    <div class="div-table-row w100p">
+                    <div class="div-table-col w30p"> {"Gain"} </div>
+                    <div class="div-table-col w50p">
+                        <FloatInput
+                            value={self.view_state.camera_params.gain.to_string()}
+                            range={None}
+                            on_change={gain_changed}
+                        />
+                    </div>
+                    </div> // div-table-row w100p
                     </p>
                 <button onclick={time_changed_btn}>{"Update Exposure"}</button>
                 <button onclick={client_test_message}>{"Send Test Message"}</button>
                 <CompositionDetail
-                    on_action={action}
+                    on_action={action.clone()}
                     image_params={self.view_state.image_params.clone()}
                     camera_params={self.view_state.camera_params.clone()}
+                />
+                <AutoExpConfig
+                    on_action={action}
+                    image_params={self.view_state.image_params.clone()}
                 />
             </div>
         }
@@ -397,16 +388,16 @@ impl Main {
     }
 
     fn render_main(&self) -> Html {
-        // match self.selected_menu {
-            // _ => 
-            html! {
+        html! {
                 <Picture
                     image={self.image.clone()}
                     hist_width={self.view_state.config.histogram_width}
                     hist_height={self.view_state.config.histogram_height}
-                    onresize={|val| log_1(&format!("Resized: {:?}", val).into())} // TODO: Tap into this callback to do things, may be communicate to server to send a lower res image? Handle histogram on server to lower load/traffic? RgbImage must be changed: It is sending TOO MUCH data (3x for mono images)
+                    onresize={|val| log_1(&format!("Resized: {:?}", val).into())}
+                    // TODO: Tap into this callback to do things, may be
+                    // communicate to server to send a lower res image?
+                    // Handle histogram on server to lower load/traffic?
                 />
-            // },
         }
     }
 }

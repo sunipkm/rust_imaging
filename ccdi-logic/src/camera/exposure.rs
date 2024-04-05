@@ -5,8 +5,7 @@ use std::{
 
 use cameraunit::OptimumExposureBuilder;
 use ccdi_common::{
-    log_err, CameraParams, ClientMessage, ConvertRawImage, ExposureCommand, ImageParams,
-    OptExposureConfig, ProcessMessage, RawImage, StorageMessage,
+    log_err, CameraParams, ClientMessage, ConvertRawImage, ExposureCommand, ImageParams, OptConfigCmd, OptExposureConfig, ProcessMessage, RawImage, StorageMessage
 };
 use ccdi_imager_interface::{BasicProperties, ExposureArea, ExposureParams, ImagerDevice};
 use log::debug;
@@ -31,6 +30,7 @@ impl ExposureController {
         properties: BasicProperties,
         process_tx: Sender<ProcessMessage>,
         storage_tx: Sender<StorageMessage>,
+        opt: OptExposureConfig,
     ) -> Self {
         Self {
             properties,
@@ -42,6 +42,7 @@ impl ExposureController {
                     width: 0,
                     height: 0,
                 },
+                opt,
             ),
             camera_params: CameraParams::new(),
             current_exposure: None,
@@ -148,18 +149,8 @@ impl ExposureController {
     fn update_exposure_conf(
         &mut self,
         device: &mut dyn ImagerDevice,
-        config: OptExposureConfig,
+        config: OptConfigCmd,
     ) -> Result<(), String> {
-        let config = OptimumExposureBuilder::default()
-            .percentile_pix(config.percentile_pix)
-            .pixel_tgt(config.pixel_tgt)
-            .pixel_uncertainty(config.pixel_tol)
-            .min_allowed_exp(config.min_exopsure)
-            .max_allowed_exp(config.max_exposure)
-            .max_allowed_bin(config.max_bin)
-            .build()
-            .map_err(|e| e.to_string())?;
-
         device.update_opt_config(config);
         Ok(())
     }

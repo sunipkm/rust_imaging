@@ -2,32 +2,32 @@ use std::sync::Arc;
 
 use base64::{engine::general_purpose::STANDARD, Engine};
 // use ccdi_common::RgbImage;
-use ccdi_image::{
-    // compute_image_stats, render_histogram_as_bmp, rgb_image_to_bmp, ImageStats,
-    // Transform,
-    TransformFunction,
-};
+// use ccdi_image::{
+//     // compute_image_stats, render_histogram_as_bmp, rgb_image_to_bmp, ImageStats,
+//     // Transform,
+//     TransformFunction,
+// };
 
 use uuid::Uuid;
 use yew::{Callback, Properties};
 
-use wasm_bindgen::JsCast;
+// use wasm_bindgen::JsCast;
 
-use web_sys::console::log_1;
-use web_sys::{window, HtmlElement};
+// use web_sys::console::log_1;
+// use web_sys::{window, HtmlElement};
 
 use super::*;
 
 // ============================================ PUBLIC =============================================
 
-pub enum Msg {
-    ChangeGain(i32),
-    ChangeFunction(TransformFunction),
-}
+// pub enum Msg {
+//     ChangeGain(i32),
+//     ChangeFunction(TransformFunction),
+// }
 
 pub struct Picture {
-    gain: i32,
-    function: TransformFunction,
+    // gain: i32,
+    // function: TransformFunction,
     uuid: String,
 }
 
@@ -40,22 +40,22 @@ pub struct PictureData {
 }
 
 impl Component for Picture {
-    type Message = Msg;
+    type Message = ();
     type Properties = PictureData;
 
     fn create(_ctx: &Context<Self>) -> Self {
         Self {
-            gain: 1,
-            function: TransformFunction::Sqrt,
+            // gain: 1,
+            // function: TransformFunction::Sqrt,
             uuid: Uuid::new_v4().to_string(),
         }
     }
 
-    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
-        match msg {
-            Msg::ChangeGain(value) => self.gain = value,
-            Msg::ChangeFunction(function) => self.function = function,
-        }
+    fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool {
+        // match msg {
+        //     Msg::ChangeGain(value) => self.gain = value,
+        //     Msg::ChangeFunction(function) => self.function = function,
+        // }
         true
     }
 
@@ -66,30 +66,30 @@ impl Component for Picture {
         //     sub: 500,
         // };
 
-        let mut width: i32 = 0;
-        let mut height: i32 = 0;
+        // let mut width: i32 = 0;
+        // let mut height: i32 = 0;
 
-        if let Some(window) = window() {
-            if let Some(document) = window.document() {
-                if let Some(container) =
-                    document.get_element_by_id(&format!("imagecanvas-{}", self.uuid))
-                {
-                    if let Ok(canvas) = container.dyn_into::<HtmlElement>() {
-                        log_1(
-                            &format!(
-                                "container: width: {} height: {}",
-                                canvas.offset_width(),
-                                canvas.offset_height()
-                            )
-                            .into(),
-                        );
-                        width = canvas.offset_width();
-                        height = canvas.offset_height();
-                        ctx.props().onresize.emit((width, height));
-                    }
-                }
-            }
-        }
+        // if let Some(window) = window() {
+        //     if let Some(document) = window.document() {
+        //         if let Some(container) =
+        //             document.get_element_by_id(&format!("imagecanvas-{}", self.uuid))
+        //         {
+        //             if let Ok(canvas) = container.dyn_into::<HtmlElement>() {
+        //                 log_1(
+        //                     &format!(
+        //                         "container: width: {} height: {}",
+        //                         canvas.offset_width(),
+        //                         canvas.offset_height()
+        //                     )
+        //                     .into(),
+        //                 );
+        //                 width = canvas.offset_width();
+        //                 height = canvas.offset_height();
+        //                 ctx.props().onresize.emit((width, height));
+        //             }
+        //         }
+        //     }
+        // }
 
         html! {
             <div>
@@ -118,6 +118,20 @@ impl Component for Picture {
             </div>
         }
     }
+}
+
+fn encoded_image_to_html(image: Option<&Vec<u8>>) -> Html {
+    match image.and_then(png_to_base64) {
+        None => html! {"Error loading image"},
+        Some(ref base64) => html! {
+            <img class="contain" src={format!("data:image/png;base64,{}", base64)} />
+        },
+    }
+}
+
+fn png_to_base64(image: &Vec<u8>) -> Option<String> {
+    let encoded_base64 = STANDARD.encode(image);
+    Some(encoded_base64)
 }
 
 // fn function_button(
@@ -160,15 +174,6 @@ impl Component for Picture {
 //     }
 // }
 
-fn encoded_image_to_html(image: Option<&Vec<u8>>) -> Html {
-    match image.and_then(png_to_base64) {
-        None => html! {},
-        Some(ref base64) => html! {
-            <img class="contain" src={format!("data:image/bmp;base64,{}", base64)} />
-        },
-    }
-}
-
 // fn histogram_table(stats: Option<&ImageStats>, height: usize) -> Html {
 //     match stats {
 //         None => html! {},
@@ -200,11 +205,6 @@ fn encoded_image_to_html(image: Option<&Vec<u8>>) -> Html {
 //         },
 //     }
 // }
-
-fn png_to_base64(image: &Vec<u8>) -> Option<String> {
-    let encoded_base64 = STANDARD.encode(image);
-    Some(encoded_base64)
-}
 
 // fn limits(all: u16, r: u16, g: u16, b: u16) -> Html {
 //     html! {

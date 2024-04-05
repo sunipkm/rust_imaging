@@ -30,8 +30,8 @@ impl Component for StatusBar {
                 { combined("Camera", main_state, ctx.props().logic.camera) }
                 { combined("Storage", main_state, ctx.props().logic.storage.as_connection_state()) }
                 { combined("Loop", main_state, ctx.props().logic.loop_enabled) }
-                { combined("Trigger Needed", main_state, ctx.props().logic.required) }
-                { combined("Trigger On", main_state, ctx.props().logic.trigger) }
+                // { combined("Trigger Needed", main_state, ctx.props().logic.required) }
+                // { combined("Trigger On", main_state, ctx.props().logic.trigger) }
                 { combined("Exposure", main_state, ctx.props().logic.exposure) }
                 { combined("Save On", main_state, ctx.props().logic.save) }
             </div>
@@ -65,7 +65,7 @@ fn state_html(name: &str, class: &'static str) -> Html {
 fn status_to_class(state: ConnectionState) -> &'static str {
     match state {
         ConnectionState::Disconnected => "error",
-        ConnectionState::Connecting => "error", //"warn",
+        ConnectionState::Connecting => "warn", //"warn",
         ConnectionState::Established => "ok",
     }
 }

@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{OptExposureConfig, StorageDetail, StorageMessage, StorageState};
+use crate::{StorageDetail, StorageMessage, StorageState};
+
+pub use ccdi_imager_interface::OptConfigCmd;
 
 // ============================================ PUBLIC =============================================
 
@@ -24,7 +26,7 @@ pub enum StateMessage {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum ExposureCommand {
     Start,
-    Update(OptExposureConfig),
+    Update(OptConfigCmd),
     Cancel,
 }
 

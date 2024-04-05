@@ -1,10 +1,10 @@
 use std::{cmp::min, fmt::Debug, time::SystemTime};
 
-use cameraunit::{DynamicSerialImage, OptimumExposure};
+use cameraunit::DynamicSerialImage;
 pub use cameraunit::{ImageMetaData, SerialImageBuffer};
 use ccdi_imager_interface::{
     BasicProperties, DeviceDescriptor, DeviceProperty, ExposureArea, ExposureParams, ImagerDevice,
-    ImagerDriver, ImagerProperties, TemperatureRequest,
+    ImagerDriver, ImagerProperties, OptConfigCmd, TemperatureRequest,
 };
 use image::{DynamicImage, ImageBuffer};
 
@@ -37,13 +37,20 @@ impl ImagerDriver for DemoImagerDriver {
         &mut self,
         _descriptor: &DeviceDescriptor,
         _: &ExposureArea,
-    ) -> Result<Box<dyn ImagerDevice>, String> {
-        Ok(Box::new(DemoImagerDevice {
-            offset: 0.0,
-            temperature: 30.0,
-        }))
+    ) -> Result<(Box<dyn ImagerDevice>, ExposureArea), String> {
+        Ok((
+            Box::new(DemoImagerDevice {
+                offset: 0.0,
+                temperature: 30.0,
+            }),
+            ExposureArea {
+                x: 0,
+                y: 0,
+                width: 6000,
+                height: 4000,
+            },
+        ))
     }
-
 }
 
 pub struct DemoImagerDevice {
@@ -52,7 +59,8 @@ pub struct DemoImagerDevice {
 }
 
 impl ImagerDevice for DemoImagerDevice {
-    fn update_opt_config(&mut self, _config: OptimumExposure) {}
+    fn update_opt_config(&mut self, _config: OptConfigCmd) {}
+
     fn read_properties(&mut self) -> Result<ImagerProperties, String> {
         self.offset += 0.001;
         Ok(ImagerProperties {
@@ -109,7 +117,7 @@ impl ImagerDevice for DemoImagerDevice {
         self.temperature = request.temperature;
         Ok(())
     }
-    
+
     fn cancel_capture(&mut self) -> Result<(), String> {
         Ok(())
     }

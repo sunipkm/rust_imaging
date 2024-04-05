@@ -10,3 +10,4 @@ pub mod usize;
 pub mod floatin;
 pub mod intin;
 pub mod rawhtml;
+pub mod autoexp;

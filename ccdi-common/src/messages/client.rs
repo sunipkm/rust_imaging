@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
 use ccdi_imager_interface::{ExposureArea, ExposureParams, ImagerProperties};
+use log::info;
 use nanocv::ImgSize;
 use serde_derive::{Deserialize, Serialize};
 use serialimage::DynamicSerialImage;
 
-use crate::{StorageDetail, StorageState};
+use crate::{OptExposureConfig, StorageDetail, StorageState};
 
 use super::gui_config::GuiConfig;
 
@@ -42,6 +43,7 @@ pub struct ImageParams {
     pub percentile_pix: f32,
     pub pixel_tgt: f32,
     pub pixel_tol: f32,
+    pub max_exp: f32,
     pub x: u16,
     pub y: u16,
     pub w: u16,
@@ -51,12 +53,14 @@ pub struct ImageParams {
 }
 
 impl ImageParams {
-    pub fn new(render_size: ImgSize, roi: ExposureArea) -> Self {
+    pub fn new(render_size: ImgSize, roi: ExposureArea, opt: OptExposureConfig) -> Self {
+        info!("ImageParams::new({:?}, {:?}, {:?})", render_size, roi, opt);
         Self {
             render_size,
-            percentile_pix: 99.5,
-            pixel_tgt: 40000. / 65535.,
-            pixel_tol: 5000. / 65535.,
+            percentile_pix: opt.percentile_pix,
+            pixel_tgt: opt.pixel_tgt,
+            pixel_tol: opt.pixel_tol,
+            max_exp: opt.max_exposure.as_secs_f32(),
             x: roi.x as u16,
             y: roi.y as u16,
             w: roi.width as u16,
@@ -77,6 +81,7 @@ impl Default for ImageParams {
                 width: 0,
                 height: 0,
             },
+            OptExposureConfig::default(),
         )
     }
 }

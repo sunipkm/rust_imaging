@@ -28,15 +28,23 @@ button {
   width: 52px;
 }
 
-.button-selected, .button-selected:hover {
+.button-selected,
+.button-selected:hover {
   background-color: #3333FF;
-  border: 3px   solid #3333FF;
+  border: 3px solid #3333FF;
 }
 
 button:hover {
   background-color: #0000CC;
   border: 3px solid #3333FF;
   cursor: pointer;
+}
+
+.button-disabled,
+.button-disabled:hover {
+  background-color: #333333;
+  border: 2px solid #666666;
+  color: #666666;
 }
 
 ul {
@@ -94,7 +102,7 @@ ul {
 .float-child {
   float: left;
   padding-left: 5px;
-  padding-right : 5px;
+  padding-right: 5px;
 }
 
 footer {
@@ -109,10 +117,12 @@ footer {
   background-color: #222222;
   border: 1px solid #666666;
 }
+
 .div-table-row {
   display: table-row;
   clear: both;
 }
+
 .div-table-col {
   float: left;
   display: table-cell;
@@ -120,10 +130,12 @@ footer {
   background-color: #333333;
   padding: 2px;
 }
+
 .hist-table {
   display: table;
   width: auto;
 }
+
 .hist-table-col {
   background-color: black;
   float: left;
@@ -131,26 +143,45 @@ footer {
   width: auto;
   padding: 2px;
 }
+
 .w100p {
   width: 100%;
 }
+
 .w60p {
   width: 60%;
 }
+
+.w50p {
+  width: 50%;
+}
+
+.w30p {
+  width: 30%;
+}
+
 .w40p {
   width: 39%;
 }
+
 .w95p {
   width: 95%;
 }
+
 .w5p {
   width: 5%;
 }
+
 .w90p {
   width: 90%;
 }
+
 .w10p {
   width: 10%;
+}
+
+.w20p {
+  width: 20%;
 }
 
 .main-row {
@@ -181,27 +212,33 @@ footer {
 .image-tools-separator {
   height: 20px;
 }
+
 .hidden {
   visibility: hidden;
 }
+
 .gray-border {
   border: 1px solid gray;
 }
+
 .red {
   color: red;
 }
+
 .green {
   color: #00FF00;
 }
+
 .blue {
   color: #0050FF;
 }
 
- /* Tooltip container */
- .tooltip {
+/* Tooltip container */
+.tooltip {
   position: relative;
   display: inline-block;
-  border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+  border-bottom: 1px dotted black;
+  /* If you want dots under the hoverable text */
 }
 
 /* Tooltip text */
@@ -242,4 +279,27 @@ footer {
 .tooltip:hover .tooltiptext {
   visibility: visible;
   opacity: 1;
-} 
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  /* display: none; <- Crashes Chrome on hover */
+  -webkit-appearance: none;
+  margin: 0;
+  /* <-- Apparently some margin are still there even though it's hidden */
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  /* Firefox */
+  appearance: textfield;
+  /* Chrome */
+}
+
+.content-box {
+  box-sizing: border-box;
+  /* Total width: 160px + (2 * 20px) + (2 * 8px) = 216px
+     Total height: 80px + (2 * 20px) + (2 * 8px) = 136px
+     Content box width: 160px
+     Content box height: 80px */
+}

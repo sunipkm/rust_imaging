@@ -1,5 +1,5 @@
 use serde_derive::{Deserialize, Serialize};
-use serialimage::{DynamicSerialImage, OptimumExposure};
+use serialimage::{DynamicSerialImage};
 
 // ============================================ PUBLIC =============================================
 
@@ -9,13 +9,21 @@ pub trait ImagerDriver {
         &mut self,
         descriptor: &DeviceDescriptor,
         roi_request: &ExposureArea,
-    ) -> Result<Box<dyn ImagerDevice>, String>;
+    ) -> Result<(Box<dyn ImagerDevice>, ExposureArea), String>;
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct DeviceDescriptor {
     pub id: i32,
     pub name: String,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct OptConfigCmd {
+    pub percentile_pix: f32,
+    pub pixel_tgt: f32,
+    pub pixel_tol: f32,
+    pub max_exp: f32,
 }
 
 pub trait ImagerDevice {
@@ -26,7 +34,7 @@ pub trait ImagerDevice {
     fn download_image(&mut self, params: &mut ExposureParams)
     -> Result<DynamicSerialImage, String>;
     fn set_temperature(&mut self, request: TemperatureRequest) -> Result<(), String>;
-    fn update_opt_config(&mut self, config: OptimumExposure);
+    fn update_opt_config(&mut self, config: OptConfigCmd);
     fn cancel_capture(&mut self) -> Result<(), String>;
 }
 

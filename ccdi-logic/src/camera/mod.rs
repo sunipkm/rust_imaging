@@ -7,11 +7,11 @@ use std::sync::{mpsc::Sender, Arc};
 
 use ccdi_common::{
     CameraParamMessage, CameraParams, ClientMessage, ConnectionState, ExposureCommand,
-    ImageParamMessage, ImageParams, IoMessage, LogicStatus, ProcessMessage, StorageDetail,
-    StorageMessage, StorageState, ViewState,
+    ImageParamMessage, ImageParams, IoMessage, LogicStatus, OptExposureConfig, ProcessMessage,
+    StorageDetail, StorageMessage, StorageState, ViewState,
 };
 use ccdi_imager_interface::{DeviceDescriptor, ExposureArea, ImagerDriver};
-use log::{info, debug};
+use log::{debug, info};
 
 use crate::ServiceConfig;
 
@@ -34,6 +34,7 @@ pub struct CameraController {
     trigger_active: bool,
     storage_detail: StorageDetail,
     turnning_off: bool,
+    optconfig: OptExposureConfig,
 }
 
 impl CameraController {
@@ -43,6 +44,7 @@ impl CameraController {
         storage_tx: Sender<StorageMessage>,
         config: Arc<ServiceConfig>,
     ) -> Self {
+        let optconfig = config.exp.clone();
         Self {
             driver,
             state: State::Error,
@@ -57,6 +59,7 @@ impl CameraController {
                     width: config.roi.width,
                     height: config.roi.height,
                 },
+                optconfig.clone(),
             ),
             camera_params: CameraParams::new(),
             process_tx,
@@ -66,6 +69,7 @@ impl CameraController {
             trigger_active: false,
             storage_detail: Default::default(),
             turnning_off: false,
+            optconfig,
         }
     }
 
@@ -89,8 +93,7 @@ impl CameraController {
 
         let mut messages = vec![];
 
-        if let Some(sview) = self.view.as_ref()
-        {
+        if let Some(sview) = self.view.as_ref() {
             if sview != &new_view {
                 messages.push(ClientMessage::View(Box::new(new_view)));
             }
@@ -163,24 +166,11 @@ impl CameraController {
             SetTemp(temp) => self.camera_params.temperature = temp,
             SetHeatingPwm(temp) => self.camera_params.heating_pwm = temp,
             SetTime(time) => self.camera_params.time = time,
-            // SetRenderingType(rendering) => self.camera_params.rendering = rendering,
             SetTriggerRequired(value) => self.camera_params.trigger_required = value,
             SetAutoExp(value) => {
                 info!("Autoexposure: {}", value);
                 self.camera_params.autoexp = value;
-            },
-            // SetFlipX(value) => self.camera_params.flipx = value,
-            // SetFlipY(value) => self.camera_params.flipy = value,
-            // SetPercentilePix(value) => self.camera_params.percentile_pix = value,
-            // SetPixelTgt(value) => self.camera_params.pixel_tgt = value,
-            // SetPixelTol(value) => self.camera_params.pixel_tol = value,
-            // SetRoi((x, y, w, h)) => {
-            //     info!("New ROI: X {} Y {}, {} x {}", x, y, w, h);
-            //     self.camera_params.x = x;
-            //     self.camera_params.y = y;
-            //     self.camera_params.w = w;
-            //     self.camera_params.h = h;
-            // }
+            }
         }
 
         if let Some(camera) = self.connected.as_mut() {
@@ -283,12 +273,19 @@ impl CameraController {
             }
             Ok(device) => {
                 self.set_detail("Device connected, reading basic info");
+                let (device, roi) = device;
+
+                self.image_params.w = roi.width as u16;
+                self.image_params.h = roi.height as u16;
+                self.image_params.x = roi.x as u16;
+                self.image_params.y = roi.y as u16;
 
                 match ConnectedCameraController::new(
                     device,
                     self.config.render_size,
                     self.process_tx.clone(),
                     self.storage_tx.clone(),
+                    self.optconfig.clone(),
                 ) {
                     Ok(connected) => {
                         self.set_detail("Camera initialized");

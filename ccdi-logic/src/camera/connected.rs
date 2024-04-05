@@ -1,7 +1,7 @@
 use std::sync::{Arc, mpsc::Sender};
 
 use ccdi_common::{
-    ExposureCommand, ClientMessage, ConnectionState, ProcessMessage, ImageParams, CameraParams, StorageMessage
+    CameraParams, ClientMessage, ConnectionState, ExposureCommand, ImageParams, OptExposureConfig, ProcessMessage, StorageMessage
 };
 use ccdi_imager_interface::{ImagerDevice, ImagerProperties, TemperatureRequest};
 use nanocv::ImgSize;
@@ -24,11 +24,12 @@ impl ConnectedCameraController {
         render_size: ImgSize,
         process_tx: Sender<ProcessMessage>,
         storage_tx: Sender<StorageMessage>,
+        opt: OptExposureConfig,
     ) -> Result<Self, String> {
         let properties = PropertiesController::new(device.as_mut())?;
 
         let exposure = ExposureController::new(
-            render_size, properties.get_properties().basic, process_tx, storage_tx
+            render_size, properties.get_properties().basic, process_tx, storage_tx, opt
         );
 
         let last_temperature_set = None;

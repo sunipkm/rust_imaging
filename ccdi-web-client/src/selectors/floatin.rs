@@ -7,7 +7,7 @@ use yew::prelude::*;
 #[derive(Clone, PartialEq, Properties)]
 pub struct Props {
     pub value: String,
-    pub width: usize,
+    pub range: Option<(f64, f64)>,
     pub on_change: Callback<String>,
 }
 
@@ -21,13 +21,23 @@ fn get_value_from_input_event(e: InputEvent) -> String {
 /// Controlled Text Input Component
 #[function_component(FloatInput)]
 pub fn text_input(props: &Props) -> Html {
-    let Props { value, width, on_change } = props.clone();
+    let Props { value, range, on_change } = props.clone();
 
     let oninput = Callback::from(move |input_event: InputEvent| {
         on_change.emit(get_value_from_input_event(input_event));
     });
 
-    html! {
-        <input type="number" maxwidth={width.to_string()} size={width.to_string()} {value} {oninput} />
+    match range {
+        Some((min, max)) => html! {
+            <input type="number" min={min.to_string()} max={max.to_string()}
+            value={value}
+            {oninput} />
+        },
+        None => html! {
+            <input type="number"
+            style="width: 100%; padding: 5px; box-sizing:border-box"
+            {value} 
+            {oninput} />
+        }
     }
 }
