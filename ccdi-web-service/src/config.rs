@@ -5,7 +5,7 @@ use argh::FromArgs;
 #[derive(FromArgs)]
 /// CCD Imaging Service
 pub struct ServerConfig {
-    /// run with a demo driver
+    /// valid options: "asi", "fli", "demo"
     #[argh(option, default = "String::from(\"asi\")")]
     pub camera: String,
 

@@ -23,7 +23,7 @@ ccdi-imager-interface = { path = "../ccdi-imager-interface" }
 ccdi-imager-demo = { path = "../ccdi-imager-demo" }
 ccdi-imager-fli = { path = "../ccdi-imager-fli" }
 
-[target.'cfg(target_os = "linux")'.dependencies]
+[target.'cfg(not(all(target_os = "macos", target_arch = "aarch64")))'.dependencies]
 ccdi-imager-asicam = { path = "../ccdi-imager-asicam" }
 
 [dev-dependencies]

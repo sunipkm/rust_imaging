@@ -1,4 +1,4 @@
-# CCD Camera Imaging Software for Moravian Instruments Cameras
+# Digital Camera Imaging Software
 
 This is an attempt to build a standalone imaging service running on
 Raspberry Pi that can be remotely controlled with a web browser.
@@ -7,37 +7,27 @@ however basic proof of concept is already working.
 
 ## Goals
 
-Web application GUI for
- - easy composition of the whole image
- - focusing the image
- - setting camera cooling parameters
- - controlling batch imaging
+#### Web application GUI for
+ - Easy composition of the whole image
+ - Focusing the image
+ - Setting camera cooling parameters
+ - Controlling batch imaging
 
-Service
- - running on a PC or Raspberry PI
- - allowing standalone batch imaging
+#### Service
+ - Running on a PC or Raspberry PI
+ - Allowing standalone batch imaging
 
 ## Stage of the Project
 
 Project is almost ready for first field test, following features are already implemented:
- - camera image preview (full, center 1:1 and corners 1:1)
- - setting camera gain and exposure time
- - camera cooling
- - external PWM-controlled output for telescope heating
- - histograms for RGB channels
- - saving series of FITS files on the disk/memory card
- - software power off of the device
- - external input (trigger) for auto guider / remote control
- - status LEDs
+ - Camera ROI Control
+ - Camera exposure Control (manual and auto)
+ - Cooling
+ - Saving series of FITS files on the disk/memory card
+ - Software power off of the service
+ - Status LEDs
 
  ## Images
-
-Working proof of concept - the following image shows CCD camera powered with
-a power bank connected to a Raspberry PI 3 microcomputer running the
-control and web service. Android tablet runs the web interface and is
-already able to take image exposure and present it in the GUI.
-
-![alt text](doc/images/ccdi-ppc.jpg)
 
 Example gui for image composition, focusing and camera parameters (demo mode with
 generated fractal image):
@@ -47,34 +37,32 @@ generated fractal image):
 ## Supported platforms
 
 Software now runs on:
- - linux PC (x86_64)
+ - Linux PC (x86_64)
  - Raspberry PI 3 (armv7)
  - Raspberry PI 4 (aarch64)
+ - macOS (aarch64: FLI only, x86_64: FLI and ZWO)
 
 ## Technologies
 
 Project uses following drivers / technologies
- - official gxccd driver for moravian cameras written in C, wrapper for Rust
-   was developed with help of `bindgen` for generating Rust headers
- - server uses `warp` and `tokio`
- - client is written in `yew` and is compiled into WebAssembly
+ - [CameraUnit](https://crates.io/crates/cameraunit) interface
+ - Server uses `warp` and `tokio`
+ - Client is written in `yew` and is compiled into WebAssembly
 
 ## Installing Dependencies to build Web Service
 
 In order to build the web service, following debian packages are needed
-
-`apt install libusb-1.0-0-dev llvm-dev libclang-dev clang libcfitsio-dev`
+```sh
+$ sudo apt install libusb-1.0-0-dev llvm-dev libclang-dev clang libcfitsio-dev
+```
 
 Web service in the repository already contains client WASM binaries compiled
 previously, so it is only needed to build the web service on the target
 platform.
 
-Service compiled on Raspberry PI 3 equipped with 1 GB od RAM without problems
-so i did not bother with crosscompiling it.
-
 To run the web service, run:
 
-```
+```sh
 cd ccdi-web-service
 cargo run --release
 ```
@@ -88,32 +76,35 @@ upon change), type:
 
 To run the client in the dev server, run:
 
-```
-cd ccdi-web-client
-trunk serve --release --open
-```
-
-## Enabling permissions for moravian camera
-
-In case of the following error:
-`[gxccd] error: my_libusb_open(): libusb_open failed: -3, LIBUSB_ERROR_ACCESS`
-
-Current user does not have sufficient permissions to work with the camera.
-
-Create text file `/etc/udev/rules.d/98-moravian.rules`
-
-And insert the following content
-```
-# Moravian camera
-ATTRS{idVendor}=="1347", ATTRS{idProduct}=="0ca0", MODE:="0666"
+```sh
+$ cd ccdi-web-client
+$ trunk serve --release --open
 ```
 
-Reload UDEV rules and reconnect the device
+To build the client:
+```sh
+$ cd ccdi-web-client
+$ trunk build --release
+```
 
- * `sudo udevadm control --reload-rules`
- * OR `sudo systemctl restart udev`
+To build the service:
+```sh
+$ cd ccdi-web-server
+$ ./copy-client-binaries.sh # builds the client and copies over necessary files
+$ cargo build --release # build the server
+```
+Optionally, create a symbolic link to the built server and execute (for passing command line args):
+```sh
+$ ln -s ../target/release/ccdi-web-service server
+$ ./server --addr 8080 # custom address
+```
 
 # Notes
 
-Tool to view FITS images: QFitsView - `sudo apt install qfitsview`
+- Tool to view FITS images: QFitsView - `sudo apt install qfitsview`
+- Cross compiling x86_64 on aarch64 macOS:
+  1. Install `homebrew` and `pkg-config`.
+  1. Install dependencies (`libusb-1.0-0`, `libcfitsio`, possibly from source) in `/path/to/x86_64libs`.
+  1. Build using `PKG_CONFIG_PATH=/path/to/x86_64libs/lib/pkgconfig PKG_CONFIG_SYSROOT_PATH=/ cargo build --release --target x86_64-apple-darwin`
+
 

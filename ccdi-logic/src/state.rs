@@ -23,7 +23,7 @@ impl BackendState {
         Self {
             camera: CameraController::new(
                 match demo_mode {
-                    #[cfg(not(target_os = "macos"))]
+                    #[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
                     "asi" => {
                         let mut drv = ccdi_imager_asicam::ASICameraDriver::new();
                         drv.update_opt_config(config.exp.get_optimum_exp_config().unwrap());
