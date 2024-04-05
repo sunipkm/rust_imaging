@@ -1,11 +1,10 @@
 use std::{path::{Path, PathBuf}, sync::Arc, time::Duration};
-use cameraunit::{OptimumExposure, OptimumExposureBuilder};
 use ccdi_imager_interface::ExposureArea;
 use log::info;
 use nanocv::ImgSize;
 use serde_derive::{Serialize, Deserialize};
 
-use ccdi_common::{to_string, GuiConfig, save_text_file, read_text_file};
+use ccdi_common::{to_string, GuiConfig, save_text_file, read_text_file, OptExposureConfig};
 use directories::ProjectDirs;
 
 // ============================================ PUBLIC =============================================
@@ -20,38 +19,6 @@ pub struct ServiceConfig {
     pub exp: OptExposureConfig,
     pub gui: GuiConfig,
     pub io: IoConfig,
-}
-
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Default)]
-pub struct OptExposureConfig {
-    pub percentile_pix: f32,
-    pub pixel_tgt: f32,
-    pub pixel_tol: f32,
-    pub pixel_exclusion: u32,
-    pub min_exopsure: Duration,
-    pub max_exposure: Duration,
-    pub max_bin: u16,
-}
-
-impl OptExposureConfig {
-    pub fn get_optimum_exp_config(&self) -> Option<OptimumExposure> {
-        let conf = OptimumExposureBuilder::default()
-        .percentile_pix(self.percentile_pix)
-        .pixel_tgt(self.pixel_tgt)
-        .pixel_uncertainty(self.pixel_tol)
-        .pixel_exclusion(self.pixel_exclusion)
-        .min_allowed_exp(self.min_exopsure)
-        .max_allowed_exp(self.max_exposure)
-        .max_allowed_bin(self.max_bin)
-        .build();
-        match conf {
-            Ok(c) => Some(c),
-            Err(e) => {
-                info!("Error creating OptimumExposure: {}", e);
-                None
-            }
-        }
-    }
 }
 
 impl Default for ServiceConfig {
