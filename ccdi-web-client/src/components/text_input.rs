@@ -23,7 +23,8 @@ pub fn text_input(props: &Props) -> Html {
     let Props { value, on_change } = props.clone();
 
     let oninput = Callback::from(move |input_event: InputEvent| {
-        on_change.emit(get_value_from_input_event(input_event));
+        let value = get_value_from_input_event(input_event);
+        on_change.emit(value);
     });
 
     html! {

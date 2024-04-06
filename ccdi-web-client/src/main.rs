@@ -91,8 +91,8 @@ impl Main {
             .link()
             .callback(|action: StateMessage| Msg::SendMessage(action));
 
-        let gain_changed = ctx.link().callback(|gain: String| {
-            let gain = gain.parse::<f64>().unwrap_or(200.0);
+        let gain_changed = ctx.link().callback(|gain: f64| {
+            // let gain = gain.parse::<f64>().unwrap_or(200.0);
             Msg::CParamUpdate(CameraParamMessage::SetGain(gain as u16))
         });
 
@@ -116,8 +116,7 @@ impl Main {
         {
             let cond = self.view_state.status.camera == ConnectionState::Established;
             let mut last_cond = LAST_CALL_CAMERA.lock().unwrap();
-            if cond && !*last_cond
-            {
+            if cond && !*last_cond {
                 *x.lock().unwrap() = self.view_state.image_params.x as usize;
                 *y.lock().unwrap() = self.view_state.image_params.y as usize;
                 *w.lock().unwrap() = self.view_state.image_params.w as usize;
@@ -223,7 +222,7 @@ impl Main {
                     selected_value = {self.view_state.camera_params.autoexp}
                     value_changed = {autoexp_changed}
                 />
-                <p>{"Current Exposure: "}{exposure_str}</p>
+                <p>{"Current Exposure: "}{exposure_str}{" Gain:"}{self.view_state.camera_params.gain.to_string()}</p>
                 <div style="border: 2px solid white;">
                     <p><b>{"Region of Interest"}</b></p>
                     <div class="float-container">
@@ -289,8 +288,9 @@ impl Main {
                         <FloatInput
                             value={(*time.lock().unwrap()).clone()}
                             range={None}
-                            on_change={move |value: String| {
-                                *time.lock().unwrap() = value;
+                            sigfig={6}
+                            on_change={move |value: f64| {
+                                *time.lock().unwrap() = value.to_string();
                             }}
                         />
                     </div>
@@ -300,8 +300,9 @@ impl Main {
                     <div class="div-table-col w30p"> {"Gain"} </div>
                     <div class="div-table-col w50p">
                         <FloatInput
-                            value={self.view_state.camera_params.gain.to_string()}
+                            value={format!("{:.0}", self.view_state.camera_params.gain)}
                             range={None}
+                            sigfig={0}
                             on_change={gain_changed}
                         />
                     </div>
@@ -316,6 +317,7 @@ impl Main {
                 />
                 <AutoExpConfig
                     on_action={action}
+                    view_state={self.view_state.clone()}
                     image_params={self.view_state.image_params.clone()}
                 />
             </div>
@@ -389,15 +391,12 @@ impl Main {
 
     fn render_main(&self) -> Html {
         html! {
-                <Picture
-                    image={self.image.clone()}
-                    hist_width={self.view_state.config.histogram_width}
-                    hist_height={self.view_state.config.histogram_height}
-                    onresize={|val| log_1(&format!("Resized: {:?}", val).into())}
-                    // TODO: Tap into this callback to do things, may be
-                    // communicate to server to send a lower res image?
-                    // Handle histogram on server to lower load/traffic?
-                />
+            <Picture
+                image={self.image.clone()}
+                hist_width={self.view_state.config.histogram_width}
+                hist_height={self.view_state.config.histogram_height}
+                onresize={|val| log_1(&format!("Resized: {:?}", val).into())}
+            />
         }
     }
 }
@@ -416,7 +415,7 @@ impl Component for Main {
         Self {
             image: None,
             view_state: Default::default(),
-            selected_menu: MenuItem::Composition,
+            selected_menu: MenuItem::System,
             connection_state: ConnectionState::Disconnected,
             connection_context: None,
             x: X.clone(),

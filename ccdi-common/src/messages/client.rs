@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use ccdi_imager_interface::{ExposureArea, ExposureParams, ImagerProperties};
-use log::info;
 use nanocv::ImgSize;
 use serde_derive::{Deserialize, Serialize};
 use serialimage::DynamicSerialImage;
@@ -54,7 +53,6 @@ pub struct ImageParams {
 
 impl ImageParams {
     pub fn new(render_size: ImgSize, roi: ExposureArea, opt: OptExposureConfig) -> Self {
-        info!("ImageParams::new({:?}, {:?}, {:?})", render_size, roi, opt);
         Self {
             render_size,
             percentile_pix: opt.percentile_pix,

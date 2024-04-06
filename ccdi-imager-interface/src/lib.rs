@@ -1,5 +1,5 @@
 use serde_derive::{Deserialize, Serialize};
-use serialimage::{DynamicSerialImage};
+use serialimage::DynamicSerialImage;
 
 // ============================================ PUBLIC =============================================
 
@@ -32,7 +32,7 @@ pub trait ImagerDevice {
     fn start_exposure(&mut self, params: &ExposureParams) -> Result<(), String>;
     fn image_ready(&mut self) -> Result<bool, String>;
     fn download_image(&mut self, params: &mut ExposureParams)
-    -> Result<DynamicSerialImage, String>;
+        -> Result<DynamicSerialImage, String>;
     fn set_temperature(&mut self, request: TemperatureRequest) -> Result<(), String>;
     fn update_opt_config(&mut self, config: OptConfigCmd);
     fn cancel_capture(&mut self) -> Result<(), String>;

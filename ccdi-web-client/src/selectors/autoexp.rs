@@ -1,4 +1,8 @@
+use std::sync::{Arc, Mutex};
+
 use autoexp::floatin::FloatInput;
+use once_cell::sync::Lazy;
+use web_sys::console::log_1;
 use yew::{Callback, Properties};
 
 use super::*;
@@ -16,14 +20,34 @@ pub struct AutoExpConfig {
 pub struct AutoExpCfgData {
     pub on_action: Callback<StateMessage>,
     pub image_params: ImageParams,
+    pub view_state: ViewState,
 }
 
 pub enum Msg {
-    UpdatePercentilePix(String),
-    UpdatePixelTgt(String),
-    UpdatePixelTol(String),
-    UpdateMaxExp(String),
+    UpdateAll,
+    UpdatePercentilePix(f64),
+    UpdatePixelTgt(f64),
+    UpdatePixelTol(f64),
+    UpdateMaxExp(f64),
     ServerAction(StateMessage),
+}
+
+impl AutoExpConfig {
+    pub fn check(&self, ctx: &Context<Self>) -> bool {
+        static LAST_CALL_CAMERA: Lazy<Arc<Mutex<bool>>> = Lazy::new(|| Arc::new(Mutex::new(false)));
+
+        // let update_all = ctx.link().callback(|_| Msg::UpdateAll);
+
+        let cond = ctx.props().view_state.status.camera == ConnectionState::Established;
+        let mut last_cond = LAST_CALL_CAMERA.lock().unwrap();
+
+        if cond && !*last_cond {
+            ctx.link().send_message(Msg::UpdateAll);
+        }
+
+        *last_cond = cond;
+        cond
+    }
 }
 
 impl Component for AutoExpConfig {
@@ -32,7 +56,6 @@ impl Component for AutoExpConfig {
 
     fn create(ctx: &Context<Self>) -> Self {
         let prop = ctx.props();
-        // TODO: Print the values of prop.image_params to check where they are coming from
         Self {
             percentile_pix: prop.image_params.percentile_pix,
             pixel_tgt: prop.image_params.pixel_tgt,
@@ -43,32 +66,31 @@ impl Component for AutoExpConfig {
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
+            Msg::UpdateAll => {
+                log_1(&format!("AutoExpConfig::update: {:?}", ctx.props().image_params).into());
+                self.percentile_pix = ctx.props().image_params.percentile_pix;
+                self.pixel_tgt = ctx.props().image_params.pixel_tgt;
+                self.pixel_tol = ctx.props().image_params.pixel_tol;
+                self.max_exp = ctx.props().image_params.max_exp;
+            }
             Msg::UpdatePercentilePix(value) => {
-                if let Ok(value) = value.parse::<f32>() {
-                    if value > 0.0 && value <= 1.0 {
-                        self.percentile_pix = value;
-                    }
+                if value > 0.0 && value <= 1.0 {
+                    self.percentile_pix = value as f32;
                 }
             }
             Msg::UpdatePixelTgt(value) => {
-                if let Ok(value) = value.parse::<f32>() {
-                    if value > 0.0 {
-                        self.pixel_tgt = value;
-                    }
+                if value > 0.0 {
+                    self.pixel_tgt = value as f32;
                 }
             }
             Msg::UpdatePixelTol(value) => {
-                if let Ok(value) = value.parse::<f32>() {
-                    if value > 0.0 {
-                        self.pixel_tol = value;
-                    }
+                if value > 0.0 {
+                    self.pixel_tol = value as f32;
                 }
             }
             Msg::UpdateMaxExp(value) => {
-                if let Ok(value) = value.parse::<f32>() {
-                    if value > 0.0 {
-                        self.max_exp = value;
-                    }
+                if value > 0.0 {
+                    self.max_exp = value as f32;
                 }
             }
             Msg::ServerAction(action) => ctx.props().on_action.emit(action),
@@ -79,6 +101,8 @@ impl Component for AutoExpConfig {
     fn view(&self, ctx: &Context<Self>) -> Html {
         use ExposureCommand::*;
         use StateMessage::*;
+
+        self.check(ctx);
 
         let chg_percentile_pix = ctx.link().callback(Msg::UpdatePercentilePix);
         let chg_pixel_tgt = ctx.link().callback(Msg::UpdatePixelTgt);
@@ -91,65 +115,69 @@ impl Component for AutoExpConfig {
         };
 
         html! {
+        <div>
             <div>
-                <div>
-                    <p>{"Auto Exposure Configuration"}</p>
-                    <div class="div-table-row w100p">
-                    <div class="div-table-col w30p"> {"Gain"} </div>
-                    <div class="div-table-col w50p">
-                    <FloatInput
-                        value={format!("{:.3}", self.percentile_pix)}
-                        range={(0.0, 1.0)}
-                        on_change={chg_percentile_pix}
-                    />
-                    </div>
-                    </div> // div-table-row w100p
-
-                    <div class="div-table-row w100p">
-                    <div class="div-table-col w30p"> {"Pixel Target"} </div>
-                    <div class="div-table-col w50p">
-                    <FloatInput
-                        value={format!("{:.5}", self.pixel_tgt)}
-                        range={(0.0, 1.0)}
-                        on_change={chg_pixel_tgt}
-                    />
-                    </div>
-                    </div> // div-table-row w100p
-
-                    <div class="div-table-row w100p">
-                    <div class="div-table-col w30p"> {"Pixel Tolerance"} </div>
-                    <div class="div-table-col w50p">
-                    <FloatInput
-                        value={format!("{:.5}", self.pixel_tol)}
-                        range={(0.0, 1.0)}
-                        on_change={chg_pixel_tol}
-                    />
-                    </div>
-                    </div> // div-table-row w100p
-
-                    <div class="div-table-row w100p">
-                    <div class="div-table-col w30p"> {"Max Exposure"} </div>
-                    <div class="div-table-col w50p">
-                    <FloatInput
-                        value={format!("{:.3}", self.max_exp)}
-                        range={(0.001,3600.0)}
-                        on_change={chg_max_exp}
-                    />
-                    </div>
-                    </div> // div-table-row w100p
-
-                    <button
-                        onclick={server_action(ExposureMessage(Update(
-                            OptConfigCmd {
-                                percentile_pix: self.percentile_pix,
-                                pixel_tgt: self.pixel_tgt,
-                                pixel_tol: self.pixel_tol,
-                                max_exp: self.max_exp,
-                            }
-                        )))}
-                        >{"Update"}</button>
+                <p>{"Auto Exposure Configuration"}</p>
+                <div class="div-table-row w100p">
+                <div class="div-table-col w50p"> {"Percentile Pixel (0--1)"} </div>
+                <div class="div-table-col w45p">
+                <FloatInput
+                    value={self.percentile_pix.to_string()}
+                    range={(0.0, 1.0)}
+                    sigfig={3}
+                    on_change={chg_percentile_pix}
+                />
                 </div>
+                </div> // div-table-row w100p
+
+                <div class="div-table-row w100p">
+                <div class="div-table-col w50p"> {"Pixel Target (0--1)"} </div>
+                <div class="div-table-col w45p">
+                <FloatInput
+                    value={self.pixel_tgt.to_string()}
+                    sigfig={5}
+                    range={(0.0, 1.0)}
+                    on_change={chg_pixel_tgt}
+                />
+                </div>
+                </div> // div-table-row w100p
+
+                <div class="div-table-row w100p">
+                <div class="div-table-col w50p"> {"Pixel Tolerance (0--1)"} </div>
+                <div class="div-table-col w45p">
+                <FloatInput
+                    value={self.pixel_tol.to_string()}
+                    sigfig={5}
+                    range={(0.0, 1.0)}
+                    on_change={chg_pixel_tol}
+                />
+                </div>
+                </div> // div-table-row w100p
+
+                <div class="div-table-row w100p">
+                <div class="div-table-col w50p"> {"Max Exposure (s)"} </div>
+                <div class="div-table-col w45p">
+                <FloatInput
+                    value={self.max_exp.to_string()}
+                    sigfig={3}
+                    range={(0.001,3600.0)}
+                    on_change={chg_max_exp}
+                />
+                </div>
+                </div> // div-table-row w100p
+
+                <button
+                    onclick={server_action(ExposureMessage(Update(
+                        OptConfigCmd {
+                            percentile_pix: self.percentile_pix,
+                            pixel_tgt: self.pixel_tgt,
+                            pixel_tol: self.pixel_tol,
+                            max_exp: self.max_exp,
+                        }
+                    )))}
+                    >{"Update"}</button>
             </div>
+        </div>
         }
     }
 }

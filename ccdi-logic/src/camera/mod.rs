@@ -168,7 +168,6 @@ impl CameraController {
             SetTime(time) => self.camera_params.time = time,
             SetTriggerRequired(value) => self.camera_params.trigger_required = value,
             SetAutoExp(value) => {
-                info!("Autoexposure: {}", value);
                 self.camera_params.autoexp = value;
             }
         }
@@ -237,10 +236,6 @@ impl CameraController {
     }
 
     fn set_detail(&mut self, detail: &str) {
-        if detail != self.detail {
-            info!("Detail updated: {}", detail);
-        }
-
         self.detail = detail.to_owned();
     }
 

@@ -3,9 +3,9 @@ use std::{
     sync::{mpsc::Sender, Arc},
 };
 
-use cameraunit::OptimumExposureBuilder;
 use ccdi_common::{
-    log_err, CameraParams, ClientMessage, ConvertRawImage, ExposureCommand, ImageParams, OptConfigCmd, OptExposureConfig, ProcessMessage, RawImage, StorageMessage
+    log_err, CameraParams, ClientMessage, ConvertRawImage, ExposureCommand, ImageParams,
+    OptConfigCmd, OptExposureConfig, ProcessMessage, RawImage, StorageMessage,
 };
 use ccdi_imager_interface::{BasicProperties, ExposureArea, ExposureParams, ImagerDevice};
 use log::debug;
@@ -95,9 +95,7 @@ impl ExposureController {
     ) -> Result<(), String> {
         match command {
             ExposureCommand::Start => self.start_exposure(device)?,
-            ExposureCommand::Update(params) => {
-                self.update_exposure_conf(device, params)?
-            }
+            ExposureCommand::Update(params) => self.update_exposure_conf(device, params)?,
             ExposureCommand::Cancel => {
                 device.cancel_capture()?;
             }
