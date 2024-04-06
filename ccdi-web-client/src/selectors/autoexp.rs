@@ -119,8 +119,8 @@ impl Component for AutoExpConfig {
             <div>
                 <p>{"Auto Exposure Configuration"}</p>
                 <div class="div-table-row w100p">
-                <div class="div-table-col w50p"> {"Percentile Pixel (0--1)"} </div>
-                <div class="div-table-col w45p">
+                <div class="div-table-col w60p"> {"Percentile Pixel (0--1)"} </div>
+                <div class="div-table-col w30p">
                 <FloatInput
                     value={self.percentile_pix.to_string()}
                     range={(0.0, 1.0)}
@@ -131,8 +131,8 @@ impl Component for AutoExpConfig {
                 </div> // div-table-row w100p
 
                 <div class="div-table-row w100p">
-                <div class="div-table-col w50p"> {"Pixel Target (0--1)"} </div>
-                <div class="div-table-col w45p">
+                <div class="div-table-col w60p"> {"Pixel Target (0--1)"} </div>
+                <div class="div-table-col w30p">
                 <FloatInput
                     value={self.pixel_tgt.to_string()}
                     sigfig={5}
@@ -143,8 +143,8 @@ impl Component for AutoExpConfig {
                 </div> // div-table-row w100p
 
                 <div class="div-table-row w100p">
-                <div class="div-table-col w50p"> {"Pixel Tolerance (0--1)"} </div>
-                <div class="div-table-col w45p">
+                <div class="div-table-col w60p"> {"Pixel Tolerance (0--1)"} </div>
+                <div class="div-table-col w30p">
                 <FloatInput
                     value={self.pixel_tol.to_string()}
                     sigfig={5}
@@ -155,8 +155,8 @@ impl Component for AutoExpConfig {
                 </div> // div-table-row w100p
 
                 <div class="div-table-row w100p">
-                <div class="div-table-col w50p"> {"Max Exposure (s)"} </div>
-                <div class="div-table-col w45p">
+                <div class="div-table-col w60p"> {"Max Exposure (s)"} </div>
+                <div class="div-table-col w30p">
                 <FloatInput
                     value={self.max_exp.to_string()}
                     sigfig={3}

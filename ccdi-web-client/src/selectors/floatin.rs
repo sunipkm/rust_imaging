@@ -127,6 +127,7 @@ pub fn text_input(props: &Props) -> Html {
     match range {
         Some((min, max)) => html! {
             <input type="number" min={min.to_string()} max={max.to_string()}
+            style="width: 100%; padding: 5px; box-sizing:border-box"
             {value}
             {oninput} />
         },
