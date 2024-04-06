@@ -17,3 +17,6 @@ simplelog = "0.12.0"
 
 ccdi-common = { path = "../ccdi-common" }
 ccdi-logic = { path = "../ccdi-logic" }
+
+[build-dependencies]
+chrono = "0.4"

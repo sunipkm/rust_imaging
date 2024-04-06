@@ -1,9 +1,0 @@
-[package]
-name = "ccdi-test-gpio"
-version = "0.1.0"
-authors = ["vchvatal"]
-edition = "2021"
-
-[dependencies]
-
-ccdi-common = { path = "../ccdi-common" }

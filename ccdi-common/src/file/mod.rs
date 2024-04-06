@@ -8,7 +8,6 @@ pub fn append_to_file(
     data: &str, path: &Path
 ) -> Result<(), String> {
     let mut file = OpenOptions::new()
-        .write(true)
         .append(true)
         .open(path)
         .map_err(to_string)?;

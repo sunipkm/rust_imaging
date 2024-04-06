@@ -14,4 +14,4 @@ test.fits
 
 .vscode/settings.json
 
-ccdi-web-service/server
+ccdi-web-service/server*
