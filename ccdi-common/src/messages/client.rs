@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use ccdi_imager_interface::{ExposureArea, ExposureParams, ImagerProperties};
-use nanocv::ImgSize;
+use crate::ImgSize;
 use serde_derive::{Deserialize, Serialize};
 use serialimage::DynamicSerialImage;
 

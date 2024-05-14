@@ -4,7 +4,7 @@ use ccdi_common::{
     CameraParams, ClientMessage, ConnectionState, ExposureCommand, ImageParams, OptExposureConfig, ProcessMessage, StorageMessage
 };
 use ccdi_imager_interface::{ImagerDevice, ImagerProperties, TemperatureRequest};
-use nanocv::ImgSize;
+use ccdi_common::ImgSize;
 
 use super::{properties::PropertiesController, exposure::ExposureController};
 

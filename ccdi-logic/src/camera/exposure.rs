@@ -9,7 +9,7 @@ use ccdi_common::{
 };
 use ccdi_imager_interface::{BasicProperties, ExposureArea, ExposureParams, ImagerDevice};
 use log::debug;
-use nanocv::ImgSize;
+use ccdi_common::ImgSize;
 
 // ============================================ PUBLIC =============================================
 

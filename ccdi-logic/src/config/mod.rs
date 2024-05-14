@@ -1,6 +1,6 @@
 use std::{path::{Path, PathBuf}, sync::Arc, time::Duration};
 use ccdi_imager_interface::ExposureArea;
-use nanocv::ImgSize;
+use ccdi_common::ImgSize;
 use serde_derive::{Serialize, Deserialize};
 
 use ccdi_common::{to_string, GuiConfig, save_text_file, read_text_file, OptExposureConfig};
