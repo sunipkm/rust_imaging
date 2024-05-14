@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 cameraunit = "5.0"
-image = "0.24.7"
+image = "0.25"
 log = "0.4.17"
 
 ccdi-imager-interface = { path = "../ccdi-imager-interface" }

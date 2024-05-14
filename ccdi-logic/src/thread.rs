@@ -9,7 +9,7 @@ use std::{
 use ccdi_common::{
     log_err, ClientMessage, IoMessage, ProcessMessage, StateMessage, StorageMessage,
 };
-use image::{DynamicImage, ImageOutputFormat};
+use image::{DynamicImage, ImageFormat};
 use log::{debug, error};
 
 use crate::{io::IoManager, state::BackendState, storage::Storage, ServiceConfig};
@@ -80,7 +80,7 @@ pub fn start_process_thread(
                                 );
                                 let mut buf = Cursor::new(Vec::new());
                                 let img = img
-                                    .write_to(&mut buf, ImageOutputFormat::Png)
+                                    .write_to(&mut buf, ImageFormat::Png)
                                     .map_err(|err| format!("Error converting to PNG: {:?}", err));
                                 match img {
                                     Ok(_) => {
