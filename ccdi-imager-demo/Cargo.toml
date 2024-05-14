@@ -5,7 +5,7 @@ authors = ["vchvatal"]
 edition = "2021"
 
 [dependencies]
-cameraunit = "5.0"
+cameraunit = "5.1"
 image = "0.25"
 log = "0.4.17"
 

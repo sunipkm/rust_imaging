@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cameraunit_asi = "4.0"
+cameraunit_asi = "4.1"
 ccdi-imager-interface = { path = "../ccdi-imager-interface" }
 ccdi-common = { path = "../ccdi-common" }
 log = "0.4.20"
