@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-log = "0.4.17"
+log = "0.4"
 serde = { version = "1", features = ["rc"] }
 serde_derive = "1"
 
 ccdi-imager-interface = { path = "../ccdi-imager-interface" }
-serialimage = "4.0"
+serialimage = "4.1"
