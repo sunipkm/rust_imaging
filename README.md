@@ -56,6 +56,11 @@ In order to build the web service, following debian packages are needed
 $ sudo apt install libusb-1.0-0-dev llvm-dev libclang-dev clang libcfitsio-dev
 ```
 
+Also, do no forget to update the Cargo registry to get the latest, SemVer compatible packages:
+```sh
+$ cargo update
+```
+
 Web service in the repository already contains client WASM binaries compiled
 previously, so it is only needed to build the web service on the target
 platform.
@@ -93,7 +98,7 @@ $ cd ccdi-web-server
 $ ./copy-client-binaries.sh # builds the client and copies over necessary files
 $ cargo build --release # build the server
 ```
-Optionally, create a symbolic link to the built server and execute (for passing command line args):
+Optionally, create a symbolic link to the built server and execute (for passing command line arguments):
 ```sh
 $ ln -s ../target/release/ccdi-web-service server
 $ ./server --addr 8080 # custom address
@@ -104,7 +109,7 @@ $ ./server --addr 8080 # custom address
 - Tool to view FITS images: QFitsView - `sudo apt install qfitsview`
 - Cross compiling x86_64 on aarch64 macOS:
   1. Install `homebrew` and `pkg-config`.
-  1. Install dependencies (`libusb-1.0-0`, `libcfitsio`, possibly from source) in `/path/to/x86_64libs`.
-  1. Build using `PKG_CONFIG_PATH=/path/to/x86_64libs/lib/pkgconfig PKG_CONFIG_SYSROOT_PATH=/ cargo build --release --target x86_64-apple-darwin`
+  1. Install dependencies (`libusb-1.0-0`, `libcfitsio`, possibly from source, and compile for x86-64, by prepending relevant commands with `arch -x86_64`) in `/path/to/x86_64libs`.
+  1. Build using `PKG_CONFIG_PATH=/path/to/x86_64libs/lib/pkgconfig PKG_CONFIG_SYSROOT_DIR=/ cargo build --release --target x86_64-apple-darwin`
 
 
